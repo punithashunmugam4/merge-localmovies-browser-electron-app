@@ -119,31 +119,45 @@
     />
   </head>
   <body>
-    <div id="browswe">
-      <div class="tabs">
-        <div
-          class="tab active"
-          id="1"
-          data-tab-id="1"
-          data-url="D:\\Electron app projects\\merge-localmovies-browser\\localmovies.html"
-        >
-          Home <button class="close-tab">&times;</button>
+    <div id="browser">
+      <div
+        id="toolbar"
+        style="
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+        "
+      >
+        <div class="tabs">
+          <div
+            class="tab active"
+            id="1"
+            data-tab-id="1"
+            data-url="D:\\Electron app projects\\merge-localmovies-browser\\localmovies.html"
+          >
+            Home <button class="close-tab">&times;</button>
+          </div>
+          <div id="add-tab">&#43;</div>
         </div>
-        <div id="add-tab">&#43;</div>
+        <div>
+          <span class="btn" id="show-local-movies"
+            ><i class="fas fas fa-video"></i
+          ></span>
+          <span id="interact-webview" class="btn">Auto</span>
+          <span class="btn" id="show-downloads"
+            ><i class="fas fa-download"></i
+          ></span>
+          <span id="reload-webview" class="btn"
+            ><i class="fas fa-sync-alt"></i
+          ></span>
+          <span class="btn" id="reset-app"><i class="fas fa-home"></i></span>
+          <span class="btn" id="reset-app"
+            ><i class="fas fa-hamburger"></i
+          ></span>
+        </div>
       </div>
       <form id="url-form">
         <input type="text" id="url-bar" placeholder="Enter URL here" />
-        <span class="btn" id="show-local-movies"
-          ><i class="fas fas fa-video"></i
-        ></span>
-        <span id="interact-webview" class="btn">Auto</span>
-        <span class="btn" id="show-downloads"
-          ><i class="fas fa-download"></i
-        ></span>
-        <span id="reload-webview" class="btn"
-          ><i class="fas fa-sync-alt"></i
-        ></span>
-        <span class="btn" id="reset-app"><i class="fas fa-home"></i></span>
       </form>
       <webview
         preload="preload.js"
