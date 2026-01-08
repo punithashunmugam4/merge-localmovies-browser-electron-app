@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local Movies List</title>
+    <link rel="stylesheet" href="localmovies.css" />
+  </head>
+  <body>
+    <div>
+      <h1>Local Movies</h1>
+      <input type="text" id="searchInput" placeholder="Search..." size="50" />
+      <button id="searchBtn">Search</button>
+      <button id="getAllMovies">Get All Movies</button>
+      <button id="chooseBtn">Choose Folder</button>
+      <div id="loader" class="loader hidden" aria-hidden="true">
+        <div class="spinner" role="status" aria-hidden="true"></div>
+        <span class="loader-text">Loading…</span>
+      </div>
+      <ul id="movies"></ul>
+
+      <script src="localmovies.js"></script>
+    </div>
+  </body>
+</html>

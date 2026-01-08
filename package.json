@@ -1,0 +1,52 @@
+{
+  "name": "merge-localmovies-browser",
+  "version": "1.0.1",
+  "main": "app.js",
+  "authors": "Punitha",
+  "publisher": "Punitha",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "postinstall": "electron-builder install-app-deps",
+    "app:dir": "electron-builder --dir",
+    "app:dist": "electron-builder"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/punithashunmugam4/local-movies-list-electron-app.git"
+  },
+  "author": "Punitha",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/punithashunmugam4/local-movies-list-electron-app/issues"
+  },
+  "homepage": "https://github.com/punithashunmugam4/local-movies-list-electron-app#readme",
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^26.4.0"
+  },
+  "dependencies": {
+    "clear-module": "^4.1.2",
+    "electron-context-menu": "^4.1.1",
+    "electron-log": "^5.4.3",
+    "electron-reload": "^2.0.0-alpha.1",
+    "electron-store": "^11.0.2",
+    "electron-updater": "^6.7.3"
+  },
+  "build": {
+    "appId": "merge-localmovies-browser",
+    "mac": {
+      "category": "your.app.category.type"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "punithashunmugam4",
+        "repo": "merge-localmovies-browser"
+      }
+    ]
+  },
+  "keywords": [],
+  "description": ""
+}
