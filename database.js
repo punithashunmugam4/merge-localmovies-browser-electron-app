@@ -38,9 +38,35 @@ function createTable(data) {
       row.appendChild(keyCell);
 
       const valueCell = document.createElement("td");
+      const pwWrap = document.createElement("div");
+      pwWrap.className = "pw-wrap";
       const valueElement = document.createElement("input");
+      valueElement.type = "password";
+      valueElement.readOnly = true;
+      valueElement.className = "pw-input";
       valueElement.value = item.value;
-      valueCell.appendChild(valueElement);
+      const toggleBtn = document.createElement("button");
+      toggleBtn.type = "button";
+      toggleBtn.className = "pw-toggle";
+      toggleBtn.setAttribute("aria-label", "Show value");
+      toggleBtn.innerHTML = "👁";
+
+      toggleBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (valueElement.type === "password") {
+          valueElement.type = "text";
+          toggleBtn.setAttribute("aria-label", "Hide value");
+          toggleBtn.innerHTML = "🙈";
+        } else {
+          valueElement.type = "password";
+          toggleBtn.setAttribute("aria-label", "Show value");
+          toggleBtn.innerHTML = "👁";
+        }
+      });
+
+      pwWrap.appendChild(valueElement);
+      pwWrap.appendChild(toggleBtn);
+      valueCell.appendChild(pwWrap);
       row.appendChild(valueCell);
 
       const actionCell = document.createElement("td");
@@ -72,11 +98,12 @@ function createTable(data) {
           });
           console.log(res);
           if (res && res.success) {
-            console.log(e.target.parentElement.parentElement);
-            e.target.parentElement.parentElement.remove();
+            const tr = e.target.closest("tr");
+            console.log("removing tag: ", tr);
+            if (tr) tr.remove();
           }
         } catch (e) {
-          console.log(err);
+          console.log(e);
         }
       });
 

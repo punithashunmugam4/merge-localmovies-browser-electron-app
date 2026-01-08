@@ -163,7 +163,34 @@ tbody tr:hover {
   box-shadow: 0 8px 30px rgba(37, 99, 235, 0.03);
 }
 
-/* Empty state */
+/* password input + toggle */
+.pw-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 320px;
+}
+.pw-input {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #e6e9ef;
+  background: #fff;
+  min-width: 150px;
+}
+.pw-toggle {
+  appearance: none;
+  color: black;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+.pw-toggle:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
 #data-table-body:empty:before {
   content: "No entries yet";
   display: block;
@@ -190,7 +217,6 @@ tbody tr:hover {
   margin-right: 10px;
 }
 
-/* Edit = subtle primary */
 .actions .edit-btn {
   background: #eef4ff;
   color: var(--accent);
@@ -201,7 +227,6 @@ tbody tr:hover {
   transform: translateY(-1px);
 }
 
-/* Delete = danger */
 .actions .delete-btn {
   background: rgba(239, 68, 68, 0.06);
   color: var(--danger);
@@ -212,7 +237,6 @@ tbody tr:hover {
   transform: translateY(-1px);
 }
 
-/* Small screens: stack actions vertically to save space */
 @media (max-width: 520px) {
   .actions {
     flex-direction: column;
