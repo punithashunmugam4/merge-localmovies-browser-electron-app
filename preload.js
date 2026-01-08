@@ -9,6 +9,10 @@ contextBridge.exposeInMainWorld("electron", {
   openPath: (filePath) => ipcRenderer.invoke("open-path", filePath),
   revealInFolder: (p) => ipcRenderer.invoke("reveal-in-folder", p),
   deletePath: (p) => ipcRenderer.invoke("delete-path", p),
+  addDBValue: (obj) => ipcRenderer.invoke("add-db-value", obj),
+  editDBValue: (obj) => ipcRenderer.invoke("edit-db-value", obj),
+  deleteDBValue: (obj) => ipcRenderer.invoke("delete-db-value", obj),
+  fetchDB: () => ipcRenderer.invoke("fetch-db"),
   send: (channel, data) => {
     ipcRenderer.send(channel, data);
   },

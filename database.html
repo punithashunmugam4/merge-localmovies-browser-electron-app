@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Database</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="stylesheet" href="database.css" />
+  </head>
+  <body>
+    <div class="database-container">
+      <h1>Database</h1>
+      <div class="forms-container">
+        <form id="add-data">
+          <label for="key">Key:</label>
+          <input type="text" id="key" name="key" />
+          <label for="value">Value:</label>
+          <input type="text" id="value" name="value" />
+          <button type="submit" id="add">Add</button>
+        </form>
+        <form action="" id="fetch-data">
+          <input
+            type="text"
+            name="search"
+            id="search-input"
+            placeholder="Search key..."
+          />
+        </form>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Value</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="data-table-body"></tbody>
+      </table>
+    </div>
+    <script src="database.js"></script>
+  </body>
+</html>

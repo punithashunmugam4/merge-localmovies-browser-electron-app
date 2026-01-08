@@ -12,6 +12,7 @@ import {
 import path from "path";
 import fs from "fs";
 import pkg from "electron-updater";
+import Database from "better-sqlite3";
 const { autoUpdater } = pkg;
 
 var fsPromises = fs.promises;
@@ -19,6 +20,31 @@ let mainWindow;
 app.commandLine.appendSwitch("log-level", "3");
 const dirname = app.getAppPath();
 var preload_path = path.join(dirname, "preload.js");
+const dbDir = path.join(dirname, "electron_db");
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+const dbPath = path.join(dbDir, "dbstore.db");
+const db = new Database(dbPath);
+db.pragma("journal_mode = WAL");
+db.pragma("cache_size = 32000");
+console.log(db.pragma("cache_size", { simple: true }));
+db.exec(`
+  CREATE TABLE IF NOT EXISTS "electron-database" (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
+`);
+
+// db.table("electron-database", {
+//   columns: ["key", "value"],
+//   rows: function* () {
+//     for (const key of fs.readdirSync(process.cwd())) {
+//       const data = fs.readFileSync(key);
+//       yield { key, value };
+//     }
+//   },
+// });
 
 ipcMain.handle("get-webview-actions", async () => {
   try {
@@ -263,6 +289,71 @@ ipcMain.handle("delete-path", async (_, filePath) => {
     return { success: true };
   } catch (err) {
     console.error("delete-path error", err);
+    return { success: false, error: String(err) };
+  }
+});
+
+function backup_db_close() {
+  let paused = false;
+  db.backup(`backup-${Date.now()}.db`, {
+    progress({ totalPages: t, remainingPages: r }) {
+      console.log(`progress: ${(((t - r) / t) * 100).toFixed(1)}%`);
+      return paused ? 0 : 200;
+    },
+  });
+  db.close();
+}
+
+ipcMain.handle("fetch-db", async () => {
+  try {
+    const rows = db
+      .prepare(`SELECT * FROM "electron-database" ORDER BY key`)
+      .all();
+    console.log("Fetched rows: ", rows);
+    return { success: true, data: rows };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+ipcMain.handle("add-db-value", async (_, obj) => {
+  try {
+    const stmt = db.prepare(
+      `INSERT INTO "electron-database" (key, value) VALUES (?, ?)`
+    );
+    const info = stmt.run(obj.key, obj.value);
+    console.log("info changes: ", info.changes);
+    return { success: true, data: info.changes };
+  } catch (err) {
+    // unique constraint -> key already exists
+    if (
+      err &&
+      (err.code === "SQLITE_CONSTRAINT" ||
+        /UNIQUE|CONSTRAINT/i.test(err.message))
+    ) {
+      return { success: false, error: "KEY_EXISTS" };
+    }
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle("edit-db-value", async (_, obj) => {
+  try {
+    const stmt = db.prepare(
+      `UPDATE "electron-database" SET value = ? WHERE key = ?`
+    );
+    const info = stmt.run(obj.value, obj.key);
+    return { success: info.changes > 0, changes: info.changes };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle("delete-db-value", async (_, obj) => {
+  try {
+    const stmt = db.prepare(`DELETE FROM "electron-database" WHERE key = ?`);
+    const info = stmt.run(obj.key);
+    return { success: info.changes > 0, changes: info.changes };
+  } catch (err) {
     return { success: false, error: String(err) };
   }
 });

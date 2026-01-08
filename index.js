@@ -1,9 +1,13 @@
 // Ailas renderer process communication setup
 const localMovies = document.getElementById("show-local-movies");
+const database = document.getElementById("show-database");
 localMovies.addEventListener("click", () => {
   addTab(
     "D:\\Electron app projects\\merge-localmovies-browser\\localmovies.html"
   );
+});
+database.addEventListener("click", () => {
+  addTab("D:\\Electron app projects\\merge-localmovies-browser\\database.html");
 });
 
 const resetBtn = document.getElementById("reset-app");
@@ -150,6 +154,8 @@ const addTab = (url = "https://moviesmod.build/", script = "") => {
   const urlObj = url.includes("http") ? new URL(url) : url;
   const tabName = url.includes("http")
     ? urlObj.hostname.replace("www.", "")
+    : urlObj.includes("database")
+    ? "DataBase"
     : "Local Movies";
   newElement.innerHTML = `${tabName} <button class="close-tab">&times;</button>`;
 

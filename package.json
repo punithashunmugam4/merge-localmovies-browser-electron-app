@@ -10,7 +10,8 @@
     "start": "electron .",
     "postinstall": "electron-builder install-app-deps",
     "app:dir": "electron-builder --dir",
-    "app:dist": "electron-builder"
+    "app:dist": "electron-builder",
+    "rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "repository": {
     "type": "git",
@@ -23,10 +24,13 @@
   },
   "homepage": "https://github.com/punithashunmugam4/local-movies-list-electron-app#readme",
   "devDependencies": {
+    "@electron/rebuild": "^4.0.2",
     "electron": "^39.2.7",
     "electron-builder": "^26.4.0"
   },
   "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.5.0",
     "clear-module": "^4.1.2",
     "electron-context-menu": "^4.1.1",
     "electron-log": "^5.4.3",
