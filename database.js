@@ -29,6 +29,7 @@ const searchInput = document.getElementById("search-input");
 const TableBody = document.getElementById("data-table-body");
 
 function createTable(data) {
+  TableBody.innerHTML = "";
   if (Array.isArray(data) && data.length > 0) {
     data.map((item) => {
       console.log(item);
@@ -42,7 +43,7 @@ function createTable(data) {
       pwWrap.className = "pw-wrap";
       const valueElement = document.createElement("input");
       valueElement.type = "password";
-      valueElement.readOnly = true;
+      // valueElement.readOnly = true;
       valueElement.className = "pw-input";
       valueElement.value = item.value;
       const toggleBtn = document.createElement("button");
@@ -155,3 +156,28 @@ addKeyBtn.addEventListener("click", async (e) => {
     console.error("Add failed:", err);
   }
 });
+
+function debounce(fn, wait = 150) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+}
+
+searchInput.addEventListener(
+  "input",
+  debounce((e) => {
+    const q = (e.target.value || "").trim().toLowerCase();
+    if (!q) {
+      createTable(data || []);
+      return;
+    }
+    const filtered = (data || []).filter((item) => {
+      const k = String(item.key || "").toLowerCase();
+      const v = String(item.value || "").toLowerCase();
+      return k.includes(q) || v.includes(q);
+    });
+    createTable(filtered);
+  }, 120)
+);

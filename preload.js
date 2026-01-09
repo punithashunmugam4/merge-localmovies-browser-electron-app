@@ -3,7 +3,6 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("electron", {
   showContextMenu: (params) => ipcRenderer.send("show-context-menu", params),
   getAllMovies: () => ipcRenderer.invoke("get-all-movies"),
-  getAllFolders: () => ipcRenderer.invoke("get-all-folders"),
   chooseFolder: () => ipcRenderer.invoke("choose-folder"),
   getMovies: (folder) => ipcRenderer.invoke("get-movies", folder),
   openPath: (filePath) => ipcRenderer.invoke("open-path", filePath),

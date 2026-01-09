@@ -20,12 +20,30 @@ let mainWindow;
 app.commandLine.appendSwitch("log-level", "3");
 const dirname = app.getAppPath();
 var preload_path = path.join(dirname, "preload.js");
-const dbDir = path.join(dirname, "electron_db");
+
+let dbDir, db;
+if (app.isPackaged) {
+  // prefer resources/db created via extraResources in the build config:
+  dbDir = path.join(process.resourcesPath, "electron_db");
+  // alternative: if you used asarUnpack, use:
+  // dbBaseDir = path.join(process.resourcesPath, "app.asar.unpacked", "db");
+} else {
+  // development: keep DB in project folder (next to app files)
+  dbDir = path.join(app.getAppPath(), "electron_db");
+}
+
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 const dbPath = path.join(dbDir, "dbstore.db");
-const db = new Database(dbPath);
+try {
+  db = new Database(dbPath);
+} catch (err) {
+  console.error("Failed to open DB at", dbPath, err);
+  const fallback = path.join(app.getPath("temp"), "dbstore-fallback.db");
+  console.warn("Using fallback DB at", fallback);
+  db = new Database(fallback);
+}
 db.pragma("journal_mode = WAL");
 db.pragma("cache_size = 32000");
 console.log(db.pragma("cache_size", { simple: true }));
@@ -35,16 +53,6 @@ db.exec(`
     value TEXT
   );
 `);
-
-// db.table("electron-database", {
-//   columns: ["key", "value"],
-//   rows: function* () {
-//     for (const key of fs.readdirSync(process.cwd())) {
-//       const data = fs.readFileSync(key);
-//       yield { key, value };
-//     }
-//   },
-// });
 
 ipcMain.handle("get-webview-actions", async () => {
   try {
@@ -158,6 +166,7 @@ app.whenReady().then(() => {
 
   ipcMain.on("reset-app", (event) => {
     console.log("Received reset-app message");
+    db.close();
     app.relaunch({ args: process.argv.slice(1).concat(["--relaunch"]) });
     app.exit(0);
   });
@@ -169,8 +178,55 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
+// async function backup_db_close() {
+//   if (!db) return;
+//   try {
+//     // const dbDir = path.join(app.getPath("userData"), "electron_db");
+//     // if (!fs.existsSync(dbDir)) {
+//     //   fs.mkdirSync(dbDir, { recursive: true });
+//     // }
+//     // const dbPath = path.join(dbDir, "dbstore.db");
+//     const backupFile = path.join(dbDir, `backup-${Date.now()}.db`);
+//     console.log("Starting DB backup ->", backupFile);
+//     const db = new Database(dbPath);
+//     await db.backup(backupFile, {
+//       progress({ totalPages: t, remainingPages: r }) {
+//         console.log(`backup progress: ${(((t - r) / t) * 100).toFixed(1)}%`);
+//         return 1;
+//       },
+//     });
+//     console.log("Backup finished, closing DB");
+//   } catch (err) {
+//     console.error("Backup failed:", err);
+//   } finally {
+//     try {
+//       if (db) {
+//         db.close();
+
+//         console.log("DB closed");
+//       }
+//     } catch (err) {
+//       console.error("Failed to close DB:", err);
+//     }
+//   }
+// }
+
+// app.on("before-quit", (event) => {
+//   event.preventDefault();
+//   (async () => {
+//     try {
+//       await backup_db_close();
+//     } catch (err) {
+//       console.error("Error during backupAndCloseDb:", err);
+//     } finally {
+//       app.removeAllListeners("before-quit");
+//       app.quit();
+//     }
+//   })();
+// });
+
 app.on("will-quit", () => {
-  // Unregister all shortcuts.
+  if (db) db.close();
   globalShortcut.unregisterAll();
 });
 
@@ -240,21 +296,6 @@ ipcMain.handle("get-all-movies", async () => {
   }
 });
 
-ipcMain.handle("get-all-folders", async () => {
-  if (!folder) return [];
-  try {
-    const entries = await fsPromises.readdir(folder);
-    const movieExt = /\.(mp4|mkv|avi|mov|wmv|flv)$/i;
-    const movies = entries
-      .filter((name) => movieExt.test(name))
-      .map((name) => ({ name, path: path.join(folder, name) }));
-    return movies;
-  } catch (err) {
-    console.error("Failed to read folder", err);
-    return [];
-  }
-});
-
 ipcMain.handle("open-path", async (_, filePath) => {
   try {
     const result = await shell.openPath(filePath);
@@ -292,17 +333,6 @@ ipcMain.handle("delete-path", async (_, filePath) => {
     return { success: false, error: String(err) };
   }
 });
-
-function backup_db_close() {
-  let paused = false;
-  db.backup(`backup-${Date.now()}.db`, {
-    progress({ totalPages: t, remainingPages: r }) {
-      console.log(`progress: ${(((t - r) / t) * 100).toFixed(1)}%`);
-      return paused ? 0 : 200;
-    },
-  });
-  db.close();
-}
 
 ipcMain.handle("fetch-db", async () => {
   try {
