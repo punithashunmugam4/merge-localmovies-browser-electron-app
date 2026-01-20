@@ -4,6 +4,7 @@ const getAllBtn = document.getElementById("getAllMovies");
 const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("searchInput");
 const loader = document.getElementById("loader");
+let movies;
 
 const context_listener = (event) => {
   event.preventDefault();
@@ -78,7 +79,16 @@ function displayMovies(movies) {
     moviesList.appendChild(li);
   });
 }
-
+window.addEventListener("DOMContentLoaded", async () => {
+  searchInput.value = "";
+  showLoader();
+  try {
+    movies = await window.electron.getAllMovies();
+    displayMovies(movies);
+  } finally {
+    hideLoader();
+  }
+});
 function openItemMenu(anchorEl, movie) {
   const rect = anchorEl.getBoundingClientRect();
   const menu = document.createElement("div");
@@ -197,7 +207,7 @@ chooseBtn.addEventListener("click", async () => {
   if (!folder) return;
   showLoader();
   try {
-    const movies = await window.electron.getMovies(folder);
+    movies = await window.electron.getMovies(folder);
     displayMovies(movies);
   } finally {
     hideLoader();
@@ -208,17 +218,25 @@ getAllBtn.addEventListener("click", async () => {
   searchInput.value = "";
   showLoader();
   try {
-    const movies = await window.electron.getAllMovies();
+    movies = await window.electron.getAllMovies();
     displayMovies(movies);
   } finally {
     hideLoader();
   }
 });
 
+function debounce(fn, wait = 150) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+}
+
 async function handleSearch(query) {
   showLoader();
   try {
-    const movies = await window.electron.getAllMovies();
+    movies = await window.electron.getAllMovies();
     console.log("Total movies:", movies.length);
     const filtered = movies.filter((m) =>
       m.name.toLowerCase().includes(query.toLowerCase())
@@ -234,13 +252,22 @@ searchBtn.addEventListener("click", async () => {
   if (!query) return;
   await handleSearch(query);
 });
-searchInput.addEventListener("keydown", async (event) => {
-  if (event.key === "Enter") {
-    const query = event.target.value.trim();
-    if (!query) return;
-    await handleSearch(query);
-  }
-});
+
+searchInput.addEventListener(
+  "input",
+  debounce((e) => {
+    const q = (e.target.value || "").trim().toLowerCase();
+    if (!q) {
+      displayMovies(movies || []);
+      return;
+    }
+    const filtered = (movies || []).filter((item) => {
+      const k = String(item.name || "").toLowerCase();
+      return k.includes(q);
+    });
+    displayMovies(filtered);
+  }, 120)
+);
 
 window.electron.receive("inspect-element", (event) => {
   window.inspectElement(event.x, event.y);

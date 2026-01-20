@@ -18,6 +18,13 @@ const { autoUpdater } = pkg;
 var fsPromises = fs.promises;
 let mainWindow;
 app.commandLine.appendSwitch("log-level", "3");
+
+app.disableHardwareAcceleration();
+
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit(); // quit if another instance is already running
+}
 const dirname = app.getAppPath();
 var preload_path = path.join(dirname, "preload.js");
 
@@ -68,8 +75,11 @@ ipcMain.handle("get-webview-actions", async () => {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    autoHideMenuBar: true,
+    show: false,
+    // frame: false,
+    minWidthw: 1200,
+    icon: path.join(dirname, "icon.jpg"),
     webPreferences: {
       preload: preload_path,
       enableRemoteModule: false,
@@ -104,6 +114,12 @@ function createWindow() {
           event.reply("create-new-tab", params);
         },
       },
+      {
+        label: "Reload",
+        click: () => {
+          event.reply("reload-webview");
+        },
+      },
     ]);
     contextMenu.popup(BrowserWindow.fromWebContents(event.sender));
   });
@@ -119,8 +135,13 @@ app.whenReady().then(() => {
     mainWindow.openDevTools();
   });
   globalShortcut.register("CommandOrControl+Shift+I", () => {
-    // mainWindow.webContents.send("open-webview-devtools");
-    mainWindow.openDevTools();
+    mainWindow.webContents.send("open-webview-devtools");
+    // mainWindow.openDevTools();
+  });
+  globalShortcut.register("CommandOrControl+R", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("reload-webview");
+    }
   });
   session.defaultSession.on("will-download", (event, item, webContents) => {
     // Set the save path for the download

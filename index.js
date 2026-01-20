@@ -30,6 +30,14 @@ const context_listener = (event) => {
 };
 webview.addEventListener("context-menu", context_listener);
 
+window.electron.receive?.("reload-webview", () => {
+  let activeWebview = document.querySelector(".tab-content-frame.active");
+  console.log("Reloading on ctrl+r: ", activeWebview);
+  if (activeWebview && typeof activeWebview.reload === "function") {
+    activeWebview.reload();
+  }
+});
+
 let actions = "";
 window.electron
   .getWebviewActions()
@@ -53,12 +61,19 @@ var activeWebview = webview;
 document.getElementById("url-form").addEventListener("submit", (event) => {
   event.preventDefault();
   url = document.getElementById("url-bar").value;
+  const urlObj = url.includes("http") ? new URL(url) : url;
   console.log("URL submitted:", url);
   if (document.querySelectorAll(".tab").length > 0) {
     const activeTab = document.querySelector(".tab.active");
     activeTab.setAttribute("data-url", url);
     activeWebview = document.querySelector(".tab-content-frame.active");
     activeWebview.loadURL(url);
+    const tabName = url.includes("http")
+      ? urlObj.hostname.replace("www.", "")
+      : url.includes("database")
+      ? "DataBase"
+      : "Local Movies";
+    activeTab.innerHTML = `${tabName} <button class="close-tab">&times;</button>`;
   } else addTab(url);
 });
 
@@ -154,7 +169,7 @@ const addTab = (url = "https://moviesmod.build/", script = "") => {
   const urlObj = url.includes("http") ? new URL(url) : url;
   const tabName = url.includes("http")
     ? urlObj.hostname.replace("www.", "")
-    : urlObj.includes("database")
+    : url.includes("database")
     ? "DataBase"
     : "Local Movies";
   newElement.innerHTML = `${tabName} <button class="close-tab">&times;</button>`;
@@ -332,18 +347,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
-// Function to reload the active webview
-const reloadWebview = () => {
-  activeWebview = document.querySelector(".tab-content-frame.active");
-  if (activeWebview) {
-    activeWebview.reload();
-  }
-};
-
-document
-  .getElementById("reload-webview")
-  .addEventListener("click", reloadWebview);
 
 // Listen for the 'open-webview-devtools' event from the main process
 window.electron.receive("open-webview-devtools", () => {
