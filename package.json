@@ -40,8 +40,12 @@
   },
   "build": {
     "appId": "merge-localmovies-browser",
-    "mac": {
-      "category": "your.app.category.type"
+    "icon": "icon.ico",
+    "win": {
+      "icon": "icon.ico"
+    },
+    "linux": {
+      "icon": "icon.png"
     },
     "publish": [
       {

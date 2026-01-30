@@ -33,7 +33,7 @@ if (app.isPackaged) {
   // prefer resources/db created via extraResources in the build config:
   dbDir = path.join(process.resourcesPath, "electron_db");
   // alternative: if you used asarUnpack, use:
-  // dbBaseDir = path.join(process.resourcesPath, "app.asar.unpacked", "db");
+  // dbDir = path.join(process.resourcesPath, "app.asar.unpacked", "db");
 } else {
   // development: keep DB in project folder (next to app files)
   dbDir = path.join(app.getAppPath(), "electron_db");
@@ -79,7 +79,7 @@ function createWindow() {
     show: false,
     // frame: false,
     minWidthw: 1200,
-    icon: path.join(dirname, "icon.jpg"),
+    icon: path.join(dirname, "icon.png"),
     webPreferences: {
       preload: preload_path,
       enableRemoteModule: false,

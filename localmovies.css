@@ -63,16 +63,30 @@ button.secondary {
 button:active {
   transform: translateY(1px);
 }
-input[type="text"],
-input[type="search"] {
+i {
+  cursor: pointer;
+  color: rgb(207, 207, 207);
+}
+#searchContainer {
+  display: flex;
+  justify-content: space-between;
   padding: 8px 10px;
   border-radius: 6px;
   border: 1px solid #e6e9ef;
   background: #fff;
-  min-width: 220px;
+  min-width: 340px;
   outline: none;
 }
-
+input[type="text"] {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  width: 200px;
+}
+#content {
+  display: flex;
+  gap: 10px;
+}
 #movies {
   list-style: none;
   margin: 0;

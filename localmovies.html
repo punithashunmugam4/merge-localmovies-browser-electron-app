@@ -5,17 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Local Movies List</title>
     <link rel="stylesheet" href="localmovies.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
   </head>
   <body>
-    <div>
+    <div id="container">
       <h1>Local Movies</h1>
-      <input type="text" id="searchInput" placeholder="Search..." size="50" />
-      <button id="searchBtn">Search</button>
-      <button id="getAllMovies">Get All Movies</button>
-      <button id="chooseBtn">Choose Folder</button>
-      <div id="loader" class="loader hidden" aria-hidden="true">
-        <div class="spinner" role="status" aria-hidden="true"></div>
-        <span class="loader-text">Loading…</span>
+      <div id="content">
+        <div id="searchContainer">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search..."
+            size="50"
+          />
+          <i class="fa-solid fa-delete-left" id="clearSearch"></i>
+        </div>
+        <button id="searchBtn">Search</button>
+        <button id="getAllMovies">Get All Movies</button>
+        <button id="chooseBtn">Choose Folder</button>
+        <div id="loader" class="loader hidden" aria-hidden="true">
+          <div class="spinner" role="status" aria-hidden="true"></div>
+          <span class="loader-text">Loading…</span>
+        </div>
       </div>
       <ul id="movies"></ul>
 

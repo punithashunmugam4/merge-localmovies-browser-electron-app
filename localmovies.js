@@ -4,6 +4,7 @@ const getAllBtn = document.getElementById("getAllMovies");
 const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("searchInput");
 const loader = document.getElementById("loader");
+const clearSearch = document.getElementById("clearSearch");
 let movies;
 
 const context_listener = (event) => {
@@ -268,6 +269,11 @@ searchInput.addEventListener(
     displayMovies(filtered);
   }, 120)
 );
+
+clearSearch.addEventListener("click", () => {
+  searchInput.value = "";
+  displayMovies(movies || []);
+});
 
 window.electron.receive("inspect-element", (event) => {
   window.inspectElement(event.x, event.y);
