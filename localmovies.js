@@ -240,7 +240,7 @@ async function handleSearch(query) {
     movies = await window.electron.getAllMovies();
     console.log("Total movies:", movies.length);
     const filtered = movies.filter((m) =>
-      m.name.toLowerCase().includes(query.toLowerCase())
+      m.name.toLowerCase().includes(query.toLowerCase()),
     );
     console.log("Filtered movies with ", query, " : ", filtered);
     displayMovies(filtered);
@@ -267,7 +267,7 @@ searchInput.addEventListener(
       return k.includes(q);
     });
     displayMovies(filtered);
-  }, 120)
+  }, 120),
 );
 
 clearSearch.addEventListener("click", () => {

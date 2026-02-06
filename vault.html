@@ -12,14 +12,22 @@
   </head>
   <body>
     <div class="database-container">
-      <h1>Database</h1>
+      <h1>My Personal Vault</h1>
       <div class="forms-container">
         <form id="add-data">
           <label for="key">Key:</label>
           <input type="text" id="key" name="key" />
-          <label for="value">Value:</label>
-          <input type="text" id="value" name="value" />
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" />
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" />
+          <label for="comments">Comments/URL:</label>
+          <input type="text" id="comments" name="comments" />
           <button type="submit" id="add">Add</button>
+          <label class="custom-file-upload">
+            <input type="file" accept=".csv" id="upload" />
+            Upload CSV
+          </label>
         </form>
         <form action="" id="fetch-data">
           <input
@@ -28,19 +36,23 @@
             id="search-input"
             placeholder="Search key..."
           />
+          <p><span id="data-length">0</span> items found</p>
+          <button id="download-csv">Download CSV</button>
         </form>
       </div>
       <table>
         <thead>
           <tr>
             <th>Key</th>
-            <th>Value</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Comments/URL</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="data-table-body"></tbody>
       </table>
     </div>
-    <script src="database.js"></script>
+    <script src="vault.js"></script>
   </body>
 </html>

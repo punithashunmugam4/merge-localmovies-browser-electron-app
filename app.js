@@ -54,12 +54,6 @@ try {
 db.pragma("journal_mode = WAL");
 db.pragma("cache_size = 32000");
 console.log(db.pragma("cache_size", { simple: true }));
-db.exec(`
-  CREATE TABLE IF NOT EXISTS "electron-database" (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  );
-`);
 
 ipcMain.handle("get-webview-actions", async () => {
   try {
@@ -368,8 +362,14 @@ ipcMain.handle("fetch-db", async () => {
 });
 ipcMain.handle("add-db-value", async (_, obj) => {
   try {
+    db.exec(`
+  CREATE TABLE IF NOT EXISTS "electron-database" (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
+`);
     const stmt = db.prepare(
-      `INSERT INTO "electron-database" (key, value) VALUES (?, ?)`
+      `INSERT INTO "electron-database" (key, value) VALUES (?, ?)`,
     );
     const info = stmt.run(obj.key, obj.value);
     console.log("info changes: ", info.changes);
@@ -390,7 +390,7 @@ ipcMain.handle("add-db-value", async (_, obj) => {
 ipcMain.handle("edit-db-value", async (_, obj) => {
   try {
     const stmt = db.prepare(
-      `UPDATE "electron-database" SET value = ? WHERE key = ?`
+      `UPDATE "electron-database" SET value = ? WHERE key = ?`,
     );
     const info = stmt.run(obj.value, obj.key);
     return { success: info.changes > 0, changes: info.changes };
@@ -404,6 +404,70 @@ ipcMain.handle("delete-db-value", async (_, obj) => {
     const stmt = db.prepare(`DELETE FROM "electron-database" WHERE key = ?`);
     const info = stmt.run(obj.key);
     return { success: info.changes > 0, changes: info.changes };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+// Vault handling
+
+ipcMain.handle("add-vault-value", async (_, obj) => {
+  try {
+    db.exec(`
+  CREATE TABLE IF NOT EXISTS "vault-database" (
+    key TEXT PRIMARY KEY,
+    username TEXT,
+    password TEXT,
+    comments TEXT
+  );
+`);
+    const stmt = db.prepare(
+      `INSERT INTO "vault-database" (key, username, password, comments) VALUES (?, ?, ?, ?)`,
+    );
+    const info = stmt.run(obj.key, obj.username, obj.password, obj.comments);
+    console.log("info changes: ", info.changes);
+    return { success: true, data: info.changes };
+  } catch (err) {
+    // unique constraint -> key already exists
+    if (
+      err &&
+      (err.code === "SQLITE_CONSTRAINT" ||
+        /UNIQUE|CONSTRAINT/i.test(err.message))
+    ) {
+      return { success: false, error: "KEY_EXISTS" };
+    }
+    return { success: false, error: String(err) };
+  }
+});
+ipcMain.handle("edit-vault-value", async (_, obj) => {
+  try {
+    const stmt = db.prepare(
+      `UPDATE "vault-database" SET username = ?, password = ?, comments = ? WHERE key = ?`,
+    );
+    const info = stmt.run(obj.username, obj.password, obj.comments, obj.key);
+    return { success: info.changes > 0, changes: info.changes };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle("delete-vault-value", async (_, obj) => {
+  try {
+    const stmt = db.prepare(`DELETE FROM "vault-database" WHERE key = ?`);
+    const info = stmt.run(obj.key);
+    return { success: info.changes > 0, changes: info.changes };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+ipcMain.handle("fetch-vault", async () => {
+  try {
+    const rows = db
+
+      .prepare(`SELECT * FROM "vault-database" ORDER BY key`)
+      .all();
+    console.log("Fetched vault rows: ", rows);
+    return { success: true, data: rows };
   } catch (err) {
     return { success: false, error: String(err) };
   }

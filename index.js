@@ -1,13 +1,17 @@
 // Ailas renderer process communication setup
 const localMovies = document.getElementById("show-local-movies");
 const database = document.getElementById("show-database");
+const vault = document.getElementById("show-vault");
 localMovies.addEventListener("click", () => {
   addTab(
-    "D:\\Electron app projects\\merge-localmovies-browser\\localmovies.html"
+    "D:\\Electron app projects\\merge-localmovies-browser\\localmovies.html",
   );
 });
 database.addEventListener("click", () => {
   addTab("D:\\Electron app projects\\merge-localmovies-browser\\database.html");
+});
+vault.addEventListener("click", () => {
+  addTab("D:\\Electron app projects\\merge-localmovies-browser\\vault.html");
 });
 
 const resetBtn = document.getElementById("reset-app");
@@ -51,7 +55,7 @@ window.electron
   .catch((err) => {
     console.error(
       "Error loading webviewActions.cjs via getWebviewActions:",
-      err
+      err,
     );
   });
 
@@ -70,9 +74,8 @@ document.getElementById("url-form").addEventListener("submit", (event) => {
     activeWebview.loadURL(url);
     const tabName = url.includes("http")
       ? urlObj.hostname.replace("www.", "")
-      : url.includes("database")
-      ? "DataBase"
-      : "Local Movies";
+      : urlsplit("/").pop().split(".html")[0].split("browser")[1].toUpperCase();
+    console.log("Setting active tab name to:", tabName);
     activeTab.innerHTML = `${tabName} <button class="close-tab">&times;</button>`;
   } else addTab(url);
 });
@@ -116,7 +119,7 @@ const closeTab = (event) => {
         console.log("looping: ", remainingTabs[i].getAttribute("data-tab-id"));
         if (parseInt(remainingTabs[i].getAttribute("data-tab-id")) < tabId) {
           newActiveTabId = parseInt(
-            remainingTabs[i].getAttribute("data-tab-id")
+            remainingTabs[i].getAttribute("data-tab-id"),
           );
           console.log("New active Tab id: ", newActiveTabId);
           break;
@@ -124,12 +127,12 @@ const closeTab = (event) => {
       }
 
       const newActiveTab = document.querySelector(
-        `.tab[data-tab-id="${newActiveTabId}"]`
+        `.tab[data-tab-id="${newActiveTabId}"]`,
       );
       newActiveTab?.classList?.add("active");
 
       const newActiveWebview = document.getElementById(
-        `frame-${newActiveTabId}`
+        `frame-${newActiveTabId}`,
       );
       newActiveWebview?.classList?.remove("hidden");
       newActiveWebview?.classList?.add("active");
@@ -164,14 +167,15 @@ const addTab = (url = "https://moviesmod.build/", script = "") => {
   newElement.classList.add("active");
   newElement.setAttribute("data-tab-id", newTabId);
   newElement.setAttribute("data-url", url);
-
+  console.log("Adding new tab with URL:", url);
   // Extract hostname from URL to use as tab name
   const urlObj = url.includes("http") ? new URL(url) : url;
+  console.log("URL Object:", urlObj);
   const tabName = url.includes("http")
     ? urlObj.hostname.replace("www.", "")
-    : url.includes("database")
-    ? "DataBase"
-    : "Local Movies";
+    : url?.split("/").pop().split(".html")[0].split("browser")[1].toUpperCase();
+
+  console.log("Setting new tab name to:", tabName);
   newElement.innerHTML = `${tabName} <button class="close-tab">&times;</button>`;
 
   newElement.addEventListener("click", tabclicked);
@@ -245,9 +249,8 @@ const addTab = (url = "https://moviesmod.build/", script = "") => {
 
   newWebview.addEventListener("did-fail-load", (event) => {
     console.log("Failed to load:", event.errorDescription);
-    document.getElementById(
-      "url-bar"
-    ).value = `Error: ${event.errorDescription}`;
+    document.getElementById("url-bar").value =
+      `Error: ${event.errorDescription}`;
   });
   newWebview.addEventListener("context-menu", context_listener);
   return newWebview;
@@ -255,7 +258,7 @@ const addTab = (url = "https://moviesmod.build/", script = "") => {
 
 const waitForWebviewLoad = (
   webview = document.querySelector(".tab-content-frame.active"),
-  callback
+  callback,
 ) => {
   webview.addEventListener("did-finish-load", () => {
     callback();

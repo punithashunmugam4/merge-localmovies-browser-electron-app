@@ -12,6 +12,10 @@ contextBridge.exposeInMainWorld("electron", {
   editDBValue: (obj) => ipcRenderer.invoke("edit-db-value", obj),
   deleteDBValue: (obj) => ipcRenderer.invoke("delete-db-value", obj),
   fetchDB: () => ipcRenderer.invoke("fetch-db"),
+  addVaultValue: (obj) => ipcRenderer.invoke("add-vault-value", obj),
+  editVaultValue: (obj) => ipcRenderer.invoke("edit-vault-value", obj),
+  deleteVaultValue: (obj) => ipcRenderer.invoke("delete-vault-value", obj),
+  fetchVault: () => ipcRenderer.invoke("fetch-vault"),
   send: (channel, data) => {
     ipcRenderer.send(channel, data);
   },
