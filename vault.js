@@ -55,7 +55,7 @@ CSVInput.addEventListener("change", (e) => {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = (event) => {
+  reader.onload = async (event) => {
     const text = event.target.result;
     data = parseCSV(text);
     console.log(data);
@@ -69,17 +69,19 @@ CSVInput.addEventListener("change", (e) => {
     }));
     data.forEach(async (item) => {
       try {
-        const res = await window.electron.addVaultValue({
+        let res = await window.electron.addVaultValue({
           ...item,
         });
+
         console.log("Add response:", res);
       } catch (err) {
         console.error("Add failed:", err);
       }
     });
-    let res = window.electron.fetchVault();
-    dataLengthSpan.textContent = res.data.length;
-    createTable(res.data);
+    let r = await window.electron.fetchVault();
+    data = r.data;
+    dataLengthSpan.textContent = Array.isArray(data) ? data.length : 0;
+    createTable(data);
   };
   reader.readAsText(file);
 });
@@ -154,6 +156,9 @@ function createTable(data) {
             password: PasswordElement.value,
           });
           console.log(response);
+          if (response && response.success) {
+            window.electron.toast("Password updated");
+          }
         } catch (e) {
           console.log(e);
         }
@@ -167,9 +172,12 @@ function createTable(data) {
           });
           console.log(res);
           if (res && res.success) {
+            window.electron.toast("Entry deleted");
             const tr = e.target.closest("tr");
             console.log("removing tag: ", tr);
             if (tr) tr.remove();
+            dataLengthSpan.textContent =
+              parseInt(dataLengthSpan.textContent) - 1;
           }
         } catch (e) {
           console.log(e);
@@ -192,7 +200,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     data = res.data;
     console.log("Initial Data:", data);
-    dataLengthSpan.textContent = data.length;
+    dataLengthSpan.textContent = Array.isArray(data) ? data.length : 0;
     createTable(data);
   } catch (err) {
     console.error("Add failed:", err);
@@ -216,6 +224,7 @@ addKeyBtn.addEventListener("click", async (e) => {
     });
     console.log("Add response:", res);
     if (res && res.success) {
+      window.electron.toast("Entry added");
       const fresh = await window.electron.fetchVault();
       if (fresh && fresh.success) {
         TableBody.innerHTML = "";

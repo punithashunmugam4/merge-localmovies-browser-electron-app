@@ -1,4 +1,36 @@
 const { contextBridge, ipcRenderer } = require("electron");
+const toast = {
+  show: function (msg) {
+    let toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerText = msg;
+    toast.style.position = "fixed";
+    toast.style.bottom = "20px";
+    toast.style.left = "10%";
+    toast.style.transform = "translateX(-50%)";
+    toast.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+    toast.style.color = "#fff";
+    toast.style.padding = "10px 20px";
+    toast.style.borderRadius = "5px";
+    toast.style.fontSize = "14px";
+    toast.style.zIndex = "1000";
+
+    document.body.appendChild(toast);
+    setTimeout(function () {
+      toast.classList.add("show");
+    }, 100);
+    setTimeout(
+      function () {
+        toast.classList.remove("show");
+        setTimeout(function () {
+          document.body.removeChild(toast);
+        }, 300);
+      },
+
+      3000,
+    );
+  },
+};
 
 contextBridge.exposeInMainWorld("electron", {
   showContextMenu: (params) => ipcRenderer.send("show-context-menu", params),
@@ -27,4 +59,5 @@ contextBridge.exposeInMainWorld("electron", {
     return new Promise((resolve) => setTimeout(resolve, ms));
   },
   getWebviewActions: async () => ipcRenderer.invoke("get-webview-actions"),
+  toast: (msg) => toast.show(msg),
 });

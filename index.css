@@ -1,0 +1,99 @@
+.tabs {
+  display: flex;
+  margin-bottom: 5px;
+}
+.tab,
+#add-tab,
+#interact-webview {
+  padding: 5px;
+  border: 1px solid #ccc;
+  margin-right: 5px;
+  cursor: pointer;
+}
+.tab.active {
+  background-color: #ddd;
+}
+.close-tab {
+  border: none;
+  /* border-radius: 50%; */
+  color: #aaa;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: large;
+  padding: 0;
+}
+
+.close-tab:hover,
+.close-tab:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+webview.tab-content-frame {
+  width: 100%;
+  height: calc(100vh - 100px);
+  border: none;
+}
+webview.hidden {
+  display: none;
+}
+#url-bar {
+  width: 88%;
+  padding: 10px;
+  margin-bottom: 20px;
+  background-size: 0% 100%;
+  background-repeat: no-repeat;
+  border-radius: 20px;
+  border-color: #ccc;
+  background-color: #eee;
+  background-image: linear-gradient(to right, #ddd, #ddd);
+}
+.btn {
+  padding: 5px 5px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.btn:hover {
+  background-color: #0056b3;
+}
+/* Add some basic styling for the modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgb(0, 0, 0);
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}

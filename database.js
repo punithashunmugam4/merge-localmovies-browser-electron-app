@@ -86,6 +86,11 @@ function createTable(data) {
             value: valueElement.value,
           });
           console.log(response);
+          if (response && response.success) {
+            window.electron.toast("Value updated successfully!");
+          } else {
+            alert("Failed to update: " + (response && response.error));
+          }
         } catch (e) {
           console.log(e);
         }
@@ -99,6 +104,7 @@ function createTable(data) {
           });
           console.log(res);
           if (res && res.success) {
+            window.electron.toast("Key set deleted successfully!");
             const tr = e.target.closest("tr");
             console.log("removing tag: ", tr);
             if (tr) tr.remove();
@@ -140,6 +146,7 @@ addKeyBtn.addEventListener("click", async (e) => {
     const res = await window.electron.addDBValue({ key, value });
     console.log("Add response:", res);
     if (res && res.success) {
+      window.electron.toast("Added successfully!");
       const fresh = await window.electron.fetchDB();
       if (fresh && fresh.success) {
         TableBody.innerHTML = "";
@@ -179,5 +186,5 @@ searchInput.addEventListener(
       return k.includes(q) || v.includes(q);
     });
     createTable(filtered);
-  }, 120)
+  }, 120),
 );
