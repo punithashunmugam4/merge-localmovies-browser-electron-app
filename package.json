@@ -1,6 +1,6 @@
 {
   "name": "merge-localmovies-browser",
-  "version": "1.0.5",
+  "version": "1.0.0",
   "main": "app.js",
   "authors": "Punitha",
   "publisher": "Punitha",
@@ -79,7 +79,8 @@
     "nsis": {
       "oneClick": false,
       "perMachine": true,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true
     }
   },
   "keywords": [],
