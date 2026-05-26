@@ -1,5 +1,5 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "changedFiles": [
     "package-lock.json",
     "package.json",
@@ -8,5 +8,7 @@
     "index.js",
     "webviewActions.cjs"
   ],
-  "newDependencies": {}
+  "newDependencies": {
+    "electron": "^39.2.7"
+  }
 }
