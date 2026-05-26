@@ -1,15 +1,23 @@
 /* Modern, responsive styles for database.html */
 
 :root {
-  --bg: #f6f8fb;
-  --card: #ffffff;
-  --muted: #6b7280;
+  /* Dark theme variables */
+  --bg: #1a1a1a;
+  --card: #2d2d2d;
+  --muted: #b0b0b0;
   --accent: #2563eb;
   --danger: #ef4444;
   --radius: 10px;
   --gap: 16px;
   --pad: 18px;
-  --shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  --text-color: #ffffff;
+  --input-bg: #333333;
+  --input-border: #555555;
+  --table-border: rgba(255, 255, 255, 0.1);
+  --table-hover: rgba(255, 255, 255, 0.05);
+  --pw-toggle-bg: rgba(255, 255, 255, 0.05);
+  --pw-toggle-hover: rgba(255, 255, 255, 0.1);
   font-family:
     Inter,
     ui-sans-serif,
@@ -19,31 +27,58 @@
     Roboto,
     "Helvetica Neue",
     Arial;
+  color-scheme: dark;
+}
+
+body.light-theme {
+  /* Light theme variables */
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --danger: #ef4444;
+  --radius: 10px;
+  --gap: 16px;
+  --pad: 18px;
+  --shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  --text-color: #1a1a1a;
+  --input-bg: #ffffff;
+  --input-border: #e6e9ef;
+  --table-border: rgba(15, 23, 42, 0.03);
+  --table-hover: rgba(15, 23, 42, 0.02);
+  --pw-toggle-bg: rgba(0, 0, 0, 0.03);
+  --pw-toggle-hover: rgba(0, 0, 0, 0.06);
   color-scheme: light;
 }
 
 * {
   box-sizing: border-box;
 }
+
 html,
 body {
   height: 100%;
   margin: 0;
   background: var(--bg);
+  color: var(--text-color);
   -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
+
 .database-container {
   max-width: 1200px;
   margin: 28px auto;
   padding: var(--pad);
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.9),
-    rgba(250, 251, 255, 0.95)
+    rgba(255, 255, 255, 0.05),
+    rgba(250, 251, 255, 0.02)
   );
   border-radius: calc(var(--radius) + 4px);
   box-shadow: var(--shadow);
-  border: 1px solid rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--table-border);
 }
 
 /* Header */
@@ -51,7 +86,7 @@ body {
   margin: 0 0 12px 0;
   font-size: 20px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-color);
   letter-spacing: 0.1px;
 }
 
@@ -69,8 +104,8 @@ form {
   background: var(--card);
   padding: 12px;
   border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(2, 6, 23, 0.04);
-  border: 1px solid rgba(15, 23, 42, 0.03);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--table-border);
   display: flex;
   gap: 10px;
   align-items: center;
@@ -93,17 +128,20 @@ label {
   color: var(--muted);
   margin-right: 8px;
 }
+
 input {
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid #e6e9ef;
-  background: #fff;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-color);
   min-width: 150px;
   outline: none;
   transition:
     box-shadow 0.12s ease,
     border-color 0.12s ease;
 }
+
 input:focus {
   border-color: rgba(37, 99, 235, 0.9);
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.06);
@@ -148,14 +186,17 @@ button {
     transform 0.08s ease,
     opacity 0.08s ease;
 }
+
 button:active {
   transform: translateY(1px);
 }
+
 button.secondary {
-  background: #eef4ff;
+  background: rgba(37, 99, 235, 0.1);
   color: var(--accent);
   box-shadow: none;
 }
+
 button.danger {
   background: var(--danger);
   box-shadow: none;
@@ -169,32 +210,37 @@ table {
   border-radius: 8px;
   overflow: hidden;
 }
+
 thead th {
   text-align: left;
   font-size: 13px;
   font-weight: 700;
   color: var(--muted);
-  background: transparent;
+  background: var(--card);
   padding: 12px 14px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid var(--table-border);
 }
+
 tbody tr {
   background: var(--card);
 }
+
 tbody tr td {
   padding: 12px 14px;
   vertical-align: middle;
   font-size: 14px;
-  color: #0f172a;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.03);
+  color: var(--text-color);
+  border-bottom: 1px solid var(--table-border);
 }
+
 tbody tr:nth-child(even) {
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  background: rgba(255, 255, 255, 0.02);
 }
+
 tbody tr:hover {
-  background: linear-gradient(180deg, #fbfcff, #f6f9ff);
+  background: var(--table-hover);
   transform: translateY(-1px);
-  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.03);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
 }
 
 /* password input + toggle */
@@ -204,25 +250,29 @@ tbody tr:hover {
   gap: 8px;
   max-width: 320px;
 }
+
 .pw-input {
   padding: 6px 8px;
   border-radius: 8px;
-  border: 1px solid #e6e9ef;
-  background: #fff;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-color);
   min-width: 150px;
 }
+
 .pw-toggle {
   appearance: none;
-  color: black;
+  color: var(--text-color);
   border: 0;
-  background: transparent;
+  background: var(--pw-toggle-bg);
   cursor: pointer;
   padding: 6px;
   font-size: 14px;
   border-radius: 6px;
 }
+
 .pw-toggle:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--pw-toggle-hover);
 }
 
 #data-table-body:empty:before {
@@ -239,9 +289,9 @@ tbody tr:hover {
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--table-border);
   background: transparent;
-  color: #0f172a;
+  color: var(--text-color);
   transition:
     background 0.12s ease,
     color 0.12s ease,
@@ -255,22 +305,24 @@ tbody tr:hover {
 }
 
 .actions .edit-btn {
-  background: #eef4ff;
+  background: rgba(37, 99, 235, 0.1);
   color: var(--accent);
-  border-color: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.2);
 }
+
 .actions .edit-btn:hover {
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(37, 99, 235, 0.15);
   transform: translateY(-1px);
 }
 
 .actions .delete-btn {
-  background: rgba(239, 68, 68, 0.06);
+  background: rgba(239, 68, 68, 0.1);
   color: var(--danger);
-  border-color: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.2);
 }
+
 .actions .delete-btn:hover {
-  background: rgba(239, 68, 68, 0.12);
+  background: rgba(239, 68, 68, 0.15);
   transform: translateY(-1px);
 }
 

@@ -87,6 +87,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     movies = await window.electron.getAllMovies();
     displayMovies(movies);
   } finally {
+    document.getElementById("path-text").textContent = movies.length
+      ? `Found ${movies.length} movie(s) across all folders.`
+      : "No movies found. Click 'Choose Folder' to scan for movies.";
     hideLoader();
   }
 });
@@ -125,6 +128,7 @@ function openItemMenu(anchorEl, movie) {
           // remove item from DOM
           const li = anchorEl.closest(".movie_li");
           if (li) li.remove();
+          movies = movies.filter((m) => m.path !== movie.path);
         } else {
           alert("Failed to delete: " + (res && res.error));
         }
@@ -211,6 +215,9 @@ chooseBtn.addEventListener("click", async () => {
     movies = await window.electron.getMovies(folder);
     displayMovies(movies);
   } finally {
+    document.getElementById("path-text").textContent = movies.length
+      ? `Found ${movies.length} movie(s) in "${folder}".`
+      : `No movies found in "${folder}".`;
     hideLoader();
   }
 });

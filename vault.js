@@ -25,6 +25,26 @@ const dataLengthSpan = document.getElementById("data-length");
 const CSVInput = document.getElementById("upload");
 const downloadCSVBtn = document.getElementById("download-csv");
 
+// testing google api via main-process IPC
+async function loadGoogleSheetPreview() {
+  let spreadsheetId_test = "1rQ8mvm4nFdTEyxSg240KR24OP2pTV7GV5NGjrQfLcLc"; // Example ID, replace with actual
+  let spreadsheetId_creds = "1FcnEU2jIv2FMz45IxrjmOchGPtocA9bQIC63J_GTrBs";
+  try {
+    const result = await window.electron.fetchGoogleSheetPreview({
+      spreadsheetId: spreadsheetId_creds,
+    });
+    if (result && result.success) {
+      console.log("Google sheets data:", result.data);
+    } else if (result && result.error) {
+      console.info("Google Sheets preview skipped:", result.error);
+    }
+    return result;
+  } catch (error) {
+    console.info("Google Sheets preview skipped:", error);
+  }
+  return null;
+}
+
 downloadCSVBtn.addEventListener("click", () => {
   if (!data || data.length === 0) return alert("No data to download");
   const header = "Key,Username,Password,Comments\n";
@@ -193,6 +213,7 @@ function createTable(data) {
   }
 }
 document.addEventListener("DOMContentLoaded", async () => {
+  loadGoogleSheetPreview();
   try {
     let res = await window.electron.fetchVault();
     if (res && res.success && Array.isArray(res.data)) {

@@ -1,34 +1,35 @@
 const { contextBridge, ipcRenderer } = require("electron");
+
 const toast = {
-  show: function (msg) {
-    let toast = document.createElement("div");
-    toast.className = "toast";
-    toast.innerText = msg;
-    toast.style.position = "fixed";
-    toast.style.bottom = "20px";
-    toast.style.left = "10%";
-    toast.style.transform = "translateX(-50%)";
-    toast.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
-    toast.style.color = "#fff";
-    toast.style.padding = "10px 20px";
-    toast.style.borderRadius = "5px";
-    toast.style.fontSize = "14px";
-    toast.style.zIndex = "1000";
+  show(msg) {
+    const toastElement = document.createElement("div");
+    toastElement.className = "toast";
+    toastElement.innerText = msg;
+    toastElement.style.position = "fixed";
+    toastElement.style.bottom = "20px";
+    toastElement.style.left = "10%";
+    toastElement.style.transform = "translateX(-50%)";
+    toastElement.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+    toastElement.style.color = "#fff";
+    toastElement.style.padding = "10px 20px";
+    toastElement.style.borderRadius = "5px";
+    toastElement.style.fontSize = "14px";
+    toastElement.style.zIndex = "1000";
 
-    document.body.appendChild(toast);
-    setTimeout(function () {
-      toast.classList.add("show");
+    document.body.appendChild(toastElement);
+
+    setTimeout(() => {
+      toastElement.classList.add("show");
     }, 100);
-    setTimeout(
-      function () {
-        toast.classList.remove("show");
-        setTimeout(function () {
-          document.body.removeChild(toast);
-        }, 300);
-      },
 
-      3000,
-    );
+    setTimeout(() => {
+      toastElement.classList.remove("show");
+      setTimeout(() => {
+        if (toastElement.parentNode) {
+          toastElement.parentNode.removeChild(toastElement);
+        }
+      }, 300);
+    }, 3000);
   },
 };
 
@@ -55,9 +56,9 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on(channel, (event, ...args) => func(...args));
   },
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
-  sleep: (ms) => {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  },
+  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   getWebviewActions: async () => ipcRenderer.invoke("get-webview-actions"),
+  fetchGoogleSheetPreview: async (obj) =>
+    ipcRenderer.invoke("fetch-google-sheet-preview", obj),
   toast: (msg) => toast.show(msg),
 });

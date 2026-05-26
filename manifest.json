@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "changedFiles": [
+    "package-lock.json",
+    "package.json",
+    "preload.cjs",
+    "app.js",
+    "index.js",
+    "scripts.js",
+    "webviewActions.cjs"
+  ],
+  "newDependencies": {}
+}

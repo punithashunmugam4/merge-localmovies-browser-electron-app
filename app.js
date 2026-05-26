@@ -9,24 +9,97 @@ import {
   Menu,
   session,
 } from "electron";
+import electron from "electron";
 import path from "path";
 import fs from "fs";
+import { pathToFileURL } from "url";
 import pkg from "electron-updater";
 import Database from "better-sqlite3";
+import { google } from "googleapis";
+import util from "util";
+import { createRequire } from "module";
+const requireC = createRequire(import.meta.url);
 const { autoUpdater } = pkg;
 
 var fsPromises = fs.promises;
 let mainWindow;
 app.commandLine.appendSwitch("log-level", "3");
+global.stored_vars = {};
+
+let logger = null;
+try {
+  logger = requireC(path.join(app.getAppPath(), "logger.cjs"));
+} catch (err) {
+  console.error("Failed to load logger module:", err);
+}
+
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+import http from "http";
+
+const originalConsole = {
+  log: console.log,
+  info: console.info,
+  warn: console.warn,
+  error: console.error,
+  debug: console.debug,
+};
+
+function formatLogArgs(args) {
+  return args
+    .map((arg) =>
+      typeof arg === "string" ? arg : util.inspect(arg, { depth: 2 }),
+    )
+    .join(" ");
+}
+
+function writeLog(level, ...args) {
+  const message = formatLogArgs(args);
+  if (logger) {
+    if (typeof logger[level] === "function") {
+      logger[level](message);
+    } else if (typeof logger.log === "function") {
+      logger.log(level, message);
+    }
+  }
+  if (typeof originalConsole[level] === "function") {
+    originalConsole[level](...args);
+  }
+}
+console.log = (...args) => writeLog("info", ...args);
+console.info = (...args) => writeLog("info", ...args);
+console.warn = (...args) => writeLog("warn", ...args);
+console.error = (...args) => writeLog("error", ...args);
+console.debug = (...args) => writeLog("debug", ...args);
+
+process.on("uncaughtException", (error) => {
+  console.error("uncaughtException", error);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("unhandledRejection", reason);
+});
 
 app.disableHardwareAcceleration();
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit(); // quit if another instance is already running
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
 }
+
 const dirname = app.getAppPath();
-var preload_path = path.join(dirname, "preload.js");
+var preload_path = path.join(dirname, "preload.cjs");
+const googleCredentialsPath = path.join(
+  dirname,
+  "utility-logic-467214-v7-537815353d40.json",
+);
 
 let dbDir, db;
 if (app.isPackaged) {
@@ -36,7 +109,7 @@ if (app.isPackaged) {
   // dbDir = path.join(process.resourcesPath, "app.asar.unpacked", "db");
 } else {
   // development: keep DB in project folder (next to app files)
-  dbDir = path.join(app.getAppPath(), "electron_db");
+  dbDir = path.join(dirname, "electron_db");
 }
 
 if (!fs.existsSync(dbDir)) {
@@ -67,6 +140,62 @@ ipcMain.handle("get-webview-actions", async () => {
   }
 });
 
+async function createGoogleSheetsAuthClient() {
+  const credentialsRaw = await fsPromises.readFile(
+    googleCredentialsPath,
+    "utf8",
+  );
+  const credentials = JSON.parse(credentialsRaw);
+
+  if (!credentials.client_email || !credentials.private_key) {
+    throw new Error(
+      "Please replace the current Google client-secret JSON with a service-account key JSON that includes `client_email` and `private_key`.",
+    );
+  }
+
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+  });
+
+  return await auth.getClient();
+}
+
+ipcMain.handle("fetch-google-sheet-preview", async (_, obj) => {
+  try {
+    if (!fs.existsSync(googleCredentialsPath)) {
+      return {
+        success: false,
+        error: "Google credentials file not found.",
+      };
+    }
+
+    const authClient = await createGoogleSheetsAuthClient();
+    const service = google.sheets({ version: "v4", auth: authClient });
+    const spreadsheetId = obj.spreadsheetId;
+    const res = await service.spreadsheets.values.get({
+      spreadsheetId,
+      range: "Sheet1",
+    });
+
+    return {
+      success: true,
+      data: res.data.values || [],
+    };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.warn("Google Sheets preview skipped:", errorMessage);
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+});
+function getExecutablePath() {
+  // Always use the app installation directory for loading app.js
+  return path.join(app.getAppPath(), "app.js");
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     autoHideMenuBar: true,
@@ -79,6 +208,7 @@ function createWindow() {
       enableRemoteModule: false,
       webviewTag: true,
       nodeIntegration: true,
+      nodeIntegrationInSubFrames: true,
       backgroundThrottling: false,
       nativeWindowOpen: true,
       contextIsolation: true,
@@ -119,10 +249,68 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
-  if (app.isPackaged) {
-    autoUpdater.checkForUpdatesAndNotify();
+app.whenReady().then(async () => {
+  const startScript = getExecutablePath();
+
+  // Dynamic require of your app entry point (use createRequire in ESM)
+  try {
+    // Avoid requiring the renderer `index.js` from the main process
+    if (path.basename(startScript) !== "index.js") {
+      await import(pathToFileURL(startScript).href);
+    } else {
+      console.log("Skipping require of renderer index.js from main process");
+    }
+  } catch (err) {
+    console.error("Failed to require start script:", err);
   }
+
+  if (app.isPackaged) {
+    try {
+      const updaterPath = path.join(app.getAppPath(), "updater.cjs");
+      if (fs.existsSync(updaterPath)) {
+        const updater = requireC(updaterPath);
+        if (updater && typeof updater.checkForFileUpdates === "function") {
+          updater
+            .checkForFileUpdates()
+            .catch((err) => console.error("Updater error:", err));
+        } else {
+          console.log("No checkForFileUpdates export; skipping updater");
+        }
+      } else {
+        console.log("No updater.cjs found; skipping updates");
+      }
+    } catch (err) {
+      console.error("Failed to run updater:", err);
+    }
+  } else {
+    console.log("Development mode detected; skipping update check.");
+  }
+
+  ipcMain.handle("get-app-version", () => app.getVersion());
+
+  ipcMain.on("renderer-log", (event, payload) => {
+    if (!payload || !payload.level || !payload.message) return;
+    if (logger) {
+      const message = payload.message;
+      const metadata = payload.metadata || "";
+      if (typeof logger[payload.level] === "function") {
+        logger[payload.level](message, metadata);
+      } else if (typeof logger.log === "function") {
+        logger.log(payload.level, message, metadata);
+      }
+    }
+  });
+
+  ipcMain.on("renderer-error", (event, payload) => {
+    if (!payload) return;
+    const message = payload.message || "Renderer error";
+    const metadata = payload;
+    if (logger) {
+      logger.error(message, metadata);
+    }
+    originalConsole.error("Renderer error:", payload);
+  });
+
   createWindow();
 
   globalShortcut.register("CommandOrControl+I", () => {
@@ -173,6 +361,9 @@ app.whenReady().then(() => {
     });
   });
 
+  ipcMain.on("load-url", (event, url) => {
+    mainWindow.webContents.send("load-url-in-webview", url);
+  });
   // Handle open-new-tab event
   ipcMain.on("open-new-tab", (event, url) => {
     console.log("Received open-new-tab message with URL:", url);
@@ -185,64 +376,6 @@ app.whenReady().then(() => {
     app.relaunch({ args: process.argv.slice(1).concat(["--relaunch"]) });
     app.exit(0);
   });
-});
-app.on("activate", function () {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
-
-// async function backup_db_close() {
-//   if (!db) return;
-//   try {
-//     // const dbDir = path.join(app.getPath("userData"), "electron_db");
-//     // if (!fs.existsSync(dbDir)) {
-//     //   fs.mkdirSync(dbDir, { recursive: true });
-//     // }
-//     // const dbPath = path.join(dbDir, "dbstore.db");
-//     const backupFile = path.join(dbDir, `backup-${Date.now()}.db`);
-//     console.log("Starting DB backup ->", backupFile);
-//     const db = new Database(dbPath);
-//     await db.backup(backupFile, {
-//       progress({ totalPages: t, remainingPages: r }) {
-//         console.log(`backup progress: ${(((t - r) / t) * 100).toFixed(1)}%`);
-//         return 1;
-//       },
-//     });
-//     console.log("Backup finished, closing DB");
-//   } catch (err) {
-//     console.error("Backup failed:", err);
-//   } finally {
-//     try {
-//       if (db) {
-//         db.close();
-
-//         console.log("DB closed");
-//       }
-//     } catch (err) {
-//       console.error("Failed to close DB:", err);
-//     }
-//   }
-// }
-
-// app.on("before-quit", (event) => {
-//   event.preventDefault();
-//   (async () => {
-//     try {
-//       await backup_db_close();
-//     } catch (err) {
-//       console.error("Error during backupAndCloseDb:", err);
-//     } finally {
-//       app.removeAllListeners("before-quit");
-//       app.quit();
-//     }
-//   })();
-// });
-
-app.on("will-quit", () => {
-  if (db) db.close();
-  globalShortcut.unregisterAll();
 });
 
 ipcMain.handle("choose-folder", async () => {
@@ -471,4 +604,28 @@ ipcMain.handle("fetch-vault", async () => {
   } catch (err) {
     return { success: false, error: String(err) };
   }
+});
+
+ipcMain.handle("get-global-var", (event, key) => {
+  return global.stored_vars[key];
+});
+
+ipcMain.on("set-global-var", (event, key, value) => {
+  global.stored_vars = { ...global.stored_vars, [key]: value };
+});
+
+ipcMain.on("reset-global-var", () => {
+  global.stored_vars = {};
+});
+
+app.on("activate", function () {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
+});
+
+app.on("will-quit", () => {
+  if (db) db.close();
+  globalShortcut.unregisterAll();
 });

@@ -19,6 +19,57 @@ resetBtn.addEventListener("click", () => {
   window.electron.send("reset-app");
 });
 
+// toggle theme
+
+function setWebviewTheme(theme) {
+  const webviews = document.querySelectorAll(".tab-content-frame");
+  console.log("Setting webview theme for webviews:", webviews[0]);
+  console.log(
+    "Setting webview theme for webviews:",
+    webviews[0].contentDocument,
+  );
+  if (!webviews || !webviews[0]) return;
+  try {
+    webviews.forEach((webview) => {
+      console.log("Setting webview theme to:", theme, webview);
+      webview.executeJavaScript(
+        `document.body.classList.toggle('light-theme', ${theme === "light"})`,
+      );
+    });
+  } catch (ex) {
+    console.warn("Could not set webview theme", ex);
+  }
+}
+
+function applyTheme(theme, skipSave = false) {
+  if (!theme) return;
+  document.body.classList.toggle("light-theme", theme === "light");
+  setWebviewTheme(theme);
+  if (!skipSave) {
+    localStorage.setItem("theme", theme);
+  }
+  document.getElementById("knob").innerText = theme === "light" ? "🌞" : "🌙";
+  window.electron.toast(`Theme set to ${theme}.`);
+}
+const switch_ele = document.getElementById("myToggle");
+const toggleInput = document.getElementById("toggleInput");
+
+function toggleTheme(isChecked) {
+  toggleInput.checked = !!isChecked;
+  switch_ele.classList.toggle("on", isChecked);
+  switch_ele.classList.toggle("aria-checked", isChecked ? "true" : "false");
+  const theme = isChecked ? "light" : "dark";
+  applyTheme(theme);
+}
+switch_ele.addEventListener("click", () => toggleTheme(!toggleInput.checked));
+toggleInput.addEventListener("change", toggleTheme);
+
+function initTheme() {
+  const theme = localStorage.getItem("theme") || "dark";
+  // applyTheme(theme, true);
+  toggleTheme(theme === "light");
+}
+
 var webview = document.querySelector(".tab-content-frame.active");
 const context_listener = (event) => {
   webview = document.querySelector(".tab-content-frame.active");
@@ -61,23 +112,27 @@ window.electron
 
 var url = document.getElementById("url-bar").value;
 var activeWebview = webview;
-
-document.getElementById("url-form").addEventListener("submit", (event) => {
-  event.preventDefault();
-  url = document.getElementById("url-bar").value;
+function inpageloading(url) {
   const urlObj = url.includes("http") ? new URL(url) : url;
   console.log("URL submitted:", url);
   if (document.querySelectorAll(".tab").length > 0) {
     const activeTab = document.querySelector(".tab.active");
     activeTab.setAttribute("data-url", url);
     activeWebview = document.querySelector(".tab-content-frame.active");
-    activeWebview.loadURL(url);
-    const tabName = url.includes("http")
+    activeWebview.setAttribute("src", url);
+    let tabName = url.includes("http")
       ? urlObj.hostname.replace("www.", "")
-      : urlsplit("/").pop().split(".html")[0].split("browser")[1].toUpperCase();
+      : url.split("/").pop().split(".html")[0].split("browser")[0];
+    tabName = tabName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
     console.log("Setting active tab name to:", tabName);
     activeTab.innerHTML = `${tabName} <button class="close-tab">&times;</button>`;
   } else addTab(url);
+}
+
+document.getElementById("url-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  url = document.getElementById("url-bar").value;
+  inpageloading(url);
 });
 
 const tabclicked = (event) => {
@@ -145,8 +200,14 @@ const closeTab = (event) => {
   }
 };
 
-const addTab = (url = "https://moviesmod.build/", script = "") => {
-  url = url === "" ? "https://moviesmod.build/" : url;
+const addTab = (
+  url = "D:\\Electron app projects\\merge-localmovies-browser\\blank.html",
+  script = "",
+) => {
+  url =
+    url === ""
+      ? "D:\\Electron app projects\\merge-localmovies-browser\\blank.html"
+      : url;
 
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.classList.remove("active");
@@ -169,11 +230,18 @@ const addTab = (url = "https://moviesmod.build/", script = "") => {
   newElement.setAttribute("data-url", url);
   console.log("Adding new tab with URL:", url);
   // Extract hostname from URL to use as tab name
-  const urlObj = url.includes("http") ? new URL(url) : url;
-  console.log("URL Object:", urlObj);
-  const tabName = url.includes("http")
-    ? urlObj.hostname.replace("www.", "")
-    : url?.split("/").pop().split(".html")[0].split("browser")[1].toUpperCase();
+  let tabName = "";
+  let urlObj;
+  if (url.includes("blank.html")) {
+    tabName = "New Tab";
+  } else {
+    urlObj = url.includes("http") ? new URL(url) : url;
+    console.log("URL Object:", urlObj);
+    tabName = url.includes("http")
+      ? urlObj.hostname.replace("www.", "")
+      : url?.split("/").pop().split(".html")[0].split("browser")[1];
+    tabName = tabName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  }
 
   console.log("Setting new tab name to:", tabName);
   newElement.innerHTML = `${tabName} <button class="close-tab">&times;</button>`;
@@ -188,14 +256,23 @@ const addTab = (url = "https://moviesmod.build/", script = "") => {
   newWebview.classList.add("tab-content-frame");
   newWebview.classList.add("active");
   newWebview.setAttribute("id", `frame-${newTabId}`);
+  newWebview.setAttribute("tabindex", newTabId);
+
   newWebview.setAttribute("src", url);
-  newWebview.preload = "preload.js";
-  document.body.appendChild(newWebview);
+
+  newWebview.preload = "preload.cjs";
+  document.getElementById("browser").appendChild(newWebview);
 
   // Inject common functions into the new webview
+  // if (!url.includes("http")) {
   newWebview.addEventListener("dom-ready", () => {
     if (actions) newWebview.executeJavaScript(actions);
+    const theme = localStorage.getItem("theme") || "dark";
+    newWebview.executeJavaScript(`
+      document.body.classList.toggle('light-theme', ${theme === "light"})
+    `);
   });
+  // }
 
   // Add event listeners for the new webview
   newWebview.addEventListener("did-start-loading", () => {
@@ -218,12 +295,13 @@ const addTab = (url = "https://moviesmod.build/", script = "") => {
       event.preventDefault();
       event.returnValue = "";
     });
-    newWebview.executeJavaScript(`
-      window.addEventListener('beforeunload', (event) => {
-        event.preventDefault();
-        event.returnValue = '';
-      });
-    `);
+    // Prevent page refresh, navigate and window.location.href functions
+    // newWebview.executeJavaScript(`
+    //   window.addEventListener('beforeunload', (event) => {
+    //     event.preventDefault();
+    //     event.returnValue = '';
+    //   });
+    // `);
   });
 
   newWebview.addEventListener("did-navigate", (event) => {
@@ -242,6 +320,7 @@ const addTab = (url = "https://moviesmod.build/", script = "") => {
     if (!event.isMainFrame) return;
     newWebview.executeJavaScript("window.location.href").then((url) => {
       console.log("Webview frame finished loading:", url);
+      if (url.includes("blank.html")) url = "";
       document.getElementById("url-bar").value = url;
       newElement.setAttribute("data-url", url);
     });
@@ -265,8 +344,8 @@ const waitForWebviewLoad = (
   });
 };
 document.getElementById("add-tab").addEventListener("click", () => {
-  const url = document.getElementById("url-bar").value;
-  addTab(url);
+  // const url = document.getElementById("url-bar").value;
+  addTab("");
 });
 
 document.querySelectorAll(".tab").forEach((tab) => {
@@ -278,6 +357,10 @@ document.querySelectorAll(".tab").forEach((tab) => {
 const initialWebview = webview;
 initialWebview.addEventListener("dom-ready", () => {
   initialWebview.executeJavaScript(actions);
+  const theme = localStorage.getItem("theme") || "dark";
+  initialWebview.executeJavaScript(`
+      document.body.classList.toggle('light-theme', ${theme === "light"})
+    `);
 });
 
 initialWebview.addEventListener("did-start-loading", () => {
@@ -340,6 +423,7 @@ const interactwithwebview = (webview, script) => {
 };
 
 window.addEventListener("DOMContentLoaded", () => {
+  initTheme();
   console.log("DOM content loaded");
   document.getElementById("interact-webview").addEventListener("click", () => {
     url = document.getElementById("url-bar").value;
