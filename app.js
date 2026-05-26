@@ -102,14 +102,13 @@ const googleCredentialsPath = path.join(
 );
 
 let dbDir, db;
-if (app.isPackaged) {
-  // prefer resources/db created via extraResources in the build config:
-  dbDir = path.join(process.resourcesPath, "electron_db");
-  // alternative: if you used asarUnpack, use:
-  // dbDir = path.join(process.resourcesPath, "app.asar.unpacked", "db");
-} else {
-  // development: keep DB in project folder (next to app files)
-  dbDir = path.join(dirname, "electron_db");
+dbDir = path.resolve(process.cwd());
+try {
+  if (app && typeof app.getAppPath === "function") {
+    dbDir = path.join(app.getAppPath(), "electron_db");
+  }
+} catch (err) {
+  // ignore and keep cwd as fallback
 }
 
 if (!fs.existsSync(dbDir)) {
