@@ -1,6 +1,7 @@
 /* Modern, responsive styles for database.html */
 
-:root {
+:root,
+[data-theme="dark"] {
   /* Dark theme variables */
   --bg: #1a1a1a;
   --card: #2d2d2d;
@@ -30,7 +31,7 @@
   color-scheme: dark;
 }
 
-body.light-theme {
+[data-theme="light"] {
   /* Light theme variables */
   --bg: #f6f8fb;
   --card: #ffffff;

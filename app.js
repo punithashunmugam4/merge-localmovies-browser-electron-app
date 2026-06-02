@@ -199,7 +199,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     autoHideMenuBar: true,
     show: false,
-    // frame: false,
+    frame: false,
     minWidthw: 1200,
     icon: path.join(dirname, "icon.png"),
     webPreferences: {
@@ -247,6 +247,20 @@ function createWindow() {
     contextMenu.popup(BrowserWindow.fromWebContents(event.sender));
   });
 }
+ipcMain.on("minimize-window", () => {
+  if (mainWindow) mainWindow.minimize();
+});
+
+ipcMain.on("maximize-window", () => {
+  if (mainWindow) mainWindow.maximize();
+});
+ipcMain.on("restore-window", () => {
+  if (mainWindow) mainWindow.restore();
+});
+
+ipcMain.on("close-window", () => {
+  if (mainWindow) mainWindow.close();
+});
 
 app.whenReady().then(async () => {
   const startScript = getExecutablePath();

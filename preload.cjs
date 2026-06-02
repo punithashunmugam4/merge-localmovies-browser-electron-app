@@ -34,6 +34,10 @@ const toast = {
 };
 
 contextBridge.exposeInMainWorld("electron", {
+  minimizeWindow: () => ipcRenderer.send("minimize-window"),
+  maximizeWindow: () => ipcRenderer.send("maximize-window"),
+  restoreWindow: () => ipcRenderer.send("restore-window"),
+  closeWindow: () => ipcRenderer.send("close-window"),
   showContextMenu: (params) => ipcRenderer.send("show-context-menu", params),
   getAllMovies: () => ipcRenderer.invoke("get-all-movies"),
   chooseFolder: () => ipcRenderer.invoke("choose-folder"),

@@ -33,7 +33,7 @@ function setWebviewTheme(theme) {
     webviews.forEach((webview) => {
       console.log("Setting webview theme to:", theme, webview);
       webview.executeJavaScript(
-        `document.body.classList.toggle('light-theme', ${theme === "light"})`,
+        `document.body.setAttribute("data-theme", "${theme}")`,
       );
     });
   } catch (ex) {
@@ -41,34 +41,70 @@ function setWebviewTheme(theme) {
   }
 }
 
-function applyTheme(theme, skipSave = false) {
-  if (!theme) return;
-  document.body.classList.toggle("light-theme", theme === "light");
-  setWebviewTheme(theme);
-  if (!skipSave) {
-    localStorage.setItem("theme", theme);
-  }
-  document.getElementById("knob").innerText = theme === "light" ? "🌞" : "🌙";
-  window.electron.toast(`Theme set to ${theme}.`);
-}
-const switch_ele = document.getElementById("myToggle");
-const toggleInput = document.getElementById("toggleInput");
-
-function toggleTheme(isChecked) {
-  toggleInput.checked = !!isChecked;
-  switch_ele.classList.toggle("on", isChecked);
-  switch_ele.classList.toggle("aria-checked", isChecked ? "true" : "false");
-  const theme = isChecked ? "light" : "dark";
-  applyTheme(theme);
-}
-switch_ele.addEventListener("click", () => toggleTheme(!toggleInput.checked));
-toggleInput.addEventListener("change", toggleTheme);
-
 function initTheme() {
   const theme = localStorage.getItem("theme") || "dark";
-  // applyTheme(theme, true);
-  toggleTheme(theme === "light");
+  document.documentElement.setAttribute("data-theme", theme);
+  document.getElementById("theme-toggle").innerHTML =
+    theme === "light"
+      ? '<span class="material-symbols-outlined">dark_mode</span>'
+      : '<span class="material-symbols-outlined">light_mode</span>';
+  setWebviewTheme(theme);
+  window.electron.toast(`Theme set to ${theme}.`);
 }
+
+const toggleBtn = document.getElementById("theme-toggle");
+
+toggleBtn.addEventListener("click", () => {
+  // Check current theme state on the <html> tag
+  const currentTheme = document.documentElement.getAttribute("data-theme");
+  let theme;
+  if (currentTheme === "light") {
+    theme = "dark";
+    document.documentElement.setAttribute("data-theme", theme);
+    toggleBtn.innerHTML =
+      '<span class="material-symbols-outlined">light_mode</span>';
+    setWebviewTheme("dark");
+
+    localStorage.setItem("theme", theme);
+  } else {
+    theme = "light";
+    document.documentElement.setAttribute("data-theme", theme);
+    toggleBtn.innerHTML =
+      '<span class="material-symbols-outlined">dark_mode</span>';
+    setWebviewTheme(theme);
+    localStorage.setItem("theme", theme);
+  }
+  window.electron.toast(`Theme set to ${theme}.`);
+});
+
+//Window controls
+document.getElementById("min-btn").addEventListener("click", () => {
+  window.electron.minimizeWindow();
+});
+document.getElementById("max-btn").addEventListener("click", () => {
+  if (
+    document.getElementById("max-btn").getAttribute("data-state") ===
+    "maximized"
+  ) {
+    window.electron.restoreWindow();
+    document.getElementById("max-btn").setAttribute("data-state", "restored");
+  } else {
+    window.electron.maximizeWindow();
+    document.getElementById("max-btn").setAttribute("data-state", "maximized");
+  }
+});
+
+document.getElementById("close-btn").addEventListener("click", () => {
+  window.electron.closeWindow();
+});
+
+document.getElementById("refresh-btn").addEventListener("click", () => {
+  let activeWebview = document.querySelector(".tab-content-frame.active");
+  console.log("Reloading on refresh button click: ", activeWebview);
+  if (activeWebview && typeof activeWebview.reload === "function") {
+    activeWebview.reload();
+  }
+});
 
 var webview = document.querySelector(".tab-content-frame.active");
 const context_listener = (event) => {
@@ -110,7 +146,7 @@ window.electron
     );
   });
 
-var url = document.getElementById("url-bar").value;
+var url = document.querySelector(".address-bar").value;
 var activeWebview = webview;
 function inpageloading(url) {
   const urlObj = url.includes("http") ? new URL(url) : url;
@@ -125,13 +161,14 @@ function inpageloading(url) {
       : url.split("/").pop().split(".html")[0].split("browser")[0];
     tabName = tabName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
     console.log("Setting active tab name to:", tabName);
-    activeTab.innerHTML = `${tabName} <button class="close-tab">&times;</button>`;
+    activeTab.childNodes[0].textContent = `${tabName} `;
+    // activeTab.innerHTML = `${tabName} <button class="close-tab-btn">&times;</button>`;
   } else addTab(url);
 }
 
-document.getElementById("url-form").addEventListener("submit", (event) => {
+document.querySelector(".address-bar").addEventListener("change", (event) => {
   event.preventDefault();
-  url = document.getElementById("url-bar").value;
+  url = document.querySelector(".address-bar").value;
   inpageloading(url);
 });
 
@@ -151,7 +188,7 @@ const tabclicked = (event) => {
   var url = event.currentTarget.getAttribute("data-url");
   document.getElementById(`frame-${tabId}`).classList.remove("hidden");
   document.getElementById(`frame-${tabId}`).classList.add("active");
-  document.getElementById("url-bar").value = url;
+  document.querySelector(".address-bar").value = url;
 };
 
 const closeTab = (event) => {
@@ -192,11 +229,11 @@ const closeTab = (event) => {
       newActiveWebview?.classList?.remove("hidden");
       newActiveWebview?.classList?.add("active");
       console.log("New active Tab id: ", newActiveTabId);
-      document.getElementById("url-bar").value =
+      document.querySelector(".address-bar").value =
         newActiveTab?.getAttribute("data-url");
     }
   } else {
-    document.getElementById("url-bar").value = "";
+    document.querySelector(".address-bar").value = "";
   }
 };
 
@@ -244,24 +281,29 @@ const addTab = (
   }
 
   console.log("Setting new tab name to:", tabName);
-  newElement.innerHTML = `${tabName} <button class="close-tab">&times;</button>`;
+  newElement.innerHTML = `<span class="tab-title">${tabName} </span><button class="close-tab-btn">
+            <span class="material-symbols-outlined">close</span>
+          </button>`;
 
   newElement.addEventListener("click", tabclicked);
-  newElement.querySelector(".close-tab").addEventListener("click", closeTab);
+  newElement
+    .querySelector(".close-tab-btn")
+    .addEventListener("click", closeTab);
   document
-    .querySelector(".tabs")
-    .insertBefore(newElement, document.getElementById("add-tab"));
+    .querySelector(".tab-bar")
+    .insertBefore(newElement, document.querySelector(".add-tab-btn"));
 
   let newWebview = document.createElement("webview");
   newWebview.classList.add("tab-content-frame");
   newWebview.classList.add("active");
   newWebview.setAttribute("id", `frame-${newTabId}`);
   newWebview.setAttribute("tabindex", newTabId);
-
+  console.log("Setting new webview src to:", url);
   newWebview.setAttribute("src", url);
 
   newWebview.preload = "preload.cjs";
-  document.getElementById("browser").appendChild(newWebview);
+  let webview_wrapper = document.querySelector(".web-view-wrapper");
+  webview_wrapper.appendChild(newWebview);
 
   // Inject common functions into the new webview
   // if (!url.includes("http")) {
@@ -269,7 +311,7 @@ const addTab = (
     if (actions) newWebview.executeJavaScript(actions);
     const theme = localStorage.getItem("theme") || "dark";
     newWebview.executeJavaScript(`
-      document.body.classList.toggle('light-theme', ${theme === "light"})
+      document.body.setAttribute("data-theme", "${theme}")
     `);
   });
   // }
@@ -277,16 +319,16 @@ const addTab = (
   // Add event listeners for the new webview
   newWebview.addEventListener("did-start-loading", () => {
     console.log("Webview started loading");
-    document.getElementById("url-bar").style.backgroundSize = "0% 100%";
+    document.querySelector(".address-bar").style.backgroundSize = "0% 100%";
   });
 
   newWebview.addEventListener("did-stop-loading", () => {
     console.log("Webview stopped loading");
-    document.getElementById("url-bar").style.backgroundSize = "100% 100%";
+    document.querySelector(".address-bar").style.backgroundSize = "100% 100%";
     setTimeout(() => {
-      document.getElementById("url-bar").style.backgroundSize = "0% 100%";
+      document.querySelector(".address-bar").style.backgroundSize = "0% 100%";
     }, 500);
-    url = document.getElementById("url-bar").value;
+    url = document.querySelector(".address-bar").value;
     newWebview.executeJavaScript(script);
     newWebview.addEventListener("did-navigate-in-page", (event) => {
       newWebview.executeJavaScript(electron.continue_verification_script);
@@ -306,13 +348,13 @@ const addTab = (
 
   newWebview.addEventListener("did-navigate", (event) => {
     console.log("Webview navigated to:", event.url);
-    document.getElementById("url-bar").value = event.url;
+    document.querySelector(".address-bar").value = event.url;
     newElement.setAttribute("data-url", event.url);
   });
 
   newWebview.addEventListener("did-navigate-in-page", (event) => {
     console.log("Webview navigated in page to:", event.url);
-    document.getElementById("url-bar").value = event.url;
+    document.querySelector(".address-bar").value = event.url;
     newElement.setAttribute("data-url", event.url);
   });
 
@@ -321,14 +363,14 @@ const addTab = (
     newWebview.executeJavaScript("window.location.href").then((url) => {
       console.log("Webview frame finished loading:", url);
       if (url.includes("blank.html")) url = "";
-      document.getElementById("url-bar").value = url;
+      document.querySelector(".address-bar").value = url;
       newElement.setAttribute("data-url", url);
     });
   });
 
   newWebview.addEventListener("did-fail-load", (event) => {
     console.log("Failed to load:", event.errorDescription);
-    document.getElementById("url-bar").value =
+    document.querySelector(".address-bar").value =
       `Error: ${event.errorDescription}`;
   });
   newWebview.addEventListener("context-menu", context_listener);
@@ -343,14 +385,14 @@ const waitForWebviewLoad = (
     callback();
   });
 };
-document.getElementById("add-tab").addEventListener("click", () => {
-  // const url = document.getElementById("url-bar").value;
+document.querySelector(".add-tab-btn").addEventListener("click", () => {
+  // const url = document.querySelector(".address-bar").value;
   addTab("");
 });
 
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", tabclicked);
-  tab.querySelector(".close-tab").addEventListener("click", closeTab);
+  tab.querySelector(".close-tab-btn").addEventListener("click", closeTab);
 });
 
 // Add event listeners for the initial webview
@@ -359,20 +401,20 @@ initialWebview.addEventListener("dom-ready", () => {
   initialWebview.executeJavaScript(actions);
   const theme = localStorage.getItem("theme") || "dark";
   initialWebview.executeJavaScript(`
-      document.body.classList.toggle('light-theme', ${theme === "light"})
+      document.body.setAttribute("data-theme", "${theme}")
     `);
 });
 
 initialWebview.addEventListener("did-start-loading", () => {
   console.log("Initial webview started loading");
-  document.getElementById("url-bar").style.backgroundSize = "0% 100%";
+  document.querySelector(".address-bar").style.backgroundSize = "0% 100%";
 });
 
 initialWebview.addEventListener("did-stop-loading", () => {
   console.log("Initial webview stopped loading");
-  document.getElementById("url-bar").style.backgroundSize = "100% 100%";
+  document.querySelector(".address-bar").style.backgroundSize = "100% 100%";
   setTimeout(() => {
-    document.getElementById("url-bar").style.backgroundSize = "0% 100%";
+    document.querySelector(".address-bar").style.backgroundSize = "0% 100%";
   }, 500);
 
   // Prevent page refresh, navigate and window.location.href functions
@@ -386,13 +428,13 @@ initialWebview.addEventListener("did-stop-loading", () => {
 
 initialWebview.addEventListener("did-navigate", (event) => {
   console.log("Initial webview navigated to:", event.url);
-  document.getElementById("url-bar").value = event.url;
+  document.querySelector(".address-bar").value = event.url;
   document.querySelector(".tab.active").setAttribute("data-url", event.url);
 });
 
 initialWebview.addEventListener("did-navigate-in-page", (event) => {
   console.log("Initial webview navigated in page to:", event.url);
-  document.getElementById("url-bar").value = event.url;
+  document.querySelector(".address-bar").value = event.url;
   document.querySelector(".tab.active").setAttribute("data-url", event.url);
 });
 
@@ -400,14 +442,15 @@ initialWebview.addEventListener("did-frame-finish-load", (event) => {
   if (!event.isMainFrame) return;
   initialWebview.executeJavaScript("window.location.href").then((url) => {
     console.log("Initial webview frame finished loading:", url);
-    document.getElementById("url-bar").value = url;
+    document.querySelector(".address-bar").value = url;
     document.querySelector(".tab.active").setAttribute("data-url", url);
   });
 });
 
 initialWebview.addEventListener("did-fail-load", (event) => {
   console.log("Failed to load:", event.errorDescription);
-  document.getElementById("url-bar").value = `Error: ${event.errorDescription}`;
+  document.querySelector(".address-bar").value =
+    `Error: ${event.errorDescription}`;
 });
 
 activeWebview.addEventListener("beforeunload", (event) => {
@@ -426,7 +469,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initTheme();
   console.log("DOM content loaded");
   document.getElementById("interact-webview").addEventListener("click", () => {
-    url = document.getElementById("url-bar").value;
+    url = document.querySelector(".address-bar").value;
     console.log("Interact with webview clicked", url);
     if (url.includes("https://moviesmod.how/download")) {
       let webview = document.querySelector(".tab-content-frame.active");

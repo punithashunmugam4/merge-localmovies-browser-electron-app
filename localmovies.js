@@ -281,7 +281,3 @@ clearSearch.addEventListener("click", () => {
   searchInput.value = "";
   displayMovies(movies || []);
 });
-
-window.electron.receive("inspect-element", (event) => {
-  window.inspectElement(event.x, event.y);
-});

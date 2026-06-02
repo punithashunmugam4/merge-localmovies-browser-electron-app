@@ -7,7 +7,7 @@
       window.onload = function () {
         var url =
           "D:\\Electron app projects\\merge-localmovies-browser\\localmovies.html";
-        document.getElementById("url-bar").value = url;
+        document.querySelector(".address-bar").value = url;
         document.querySelector(".tab-content-frame").src = url;
         document.querySelector(".tab.active").setAttribute("data-url", url);
         if (window.electron && typeof window.electron.invoke === "function") {
@@ -15,6 +15,8 @@
             .invoke("get-app-version")
             .then((version) => {
               document.title = `Movies and Browser v${version}`;
+               document.querySelector(".title-text").textContent =
+                `Movies and Browser v${version}`;
             })
             .catch((err) => {
               console.warn("Failed to read app version:", err);
@@ -24,88 +26,110 @@
     </script>
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/fontawesome.min.css"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0"
     />
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
-    <div id="browser">
-      <div
-        id="toolbar"
-        style="
-          display: flex;
-          flex-direction: row;
-          justify-content: space-between;
-        "
-      >
-        <div class="tabs">
+     <header class="browser-header">
+      <div class="header-top-row">
+        <div class="app-title">
+          <span class="material-symbols-outlined title-icon">explore</span>
+          <span class="title-text">Movies & Browser</span>
+        </div>
+
+        <div class="window-controls">
+          <button class="control-btn" id="min-btn">
+            <span class="material-symbols-outlined">minimize</span>
+          </button>
+          <button class="control-btn" id="max-btn" data-state="maximized">
+            <span class="material-symbols-outlined max-icon">crop_square</span>
+            <span class="material-symbols-outlined restore-icon"
+              >flip_to_front</span
+            >
+          </button>
+          <button class="control-btn close-btn" id="close-btn">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+      <div class="header-bottom-row">
+        <div class="tab-bar">
           <div
             class="tab active"
             id="1"
             data-tab-id="1"
-            data-url="D:\\Electron app projects\\merge-localmovies-browser\\localmovies.html"
+            data-url=""
           >
-            Home <button class="close-tab">&times;</button>
+            <span class="tab-title">Home</span>
+            <button class="close-tab-btn">
+              <span class="material-symbols-outlined">close</span>
+            </button>
           </div>
-          <div id="add-tab">&#43;</div>
-        </div>
-        <div>
-          <span class="btn" title="Local Movies" id="show-local-movies"
-            ><i class="fas fa-video"></i
-          ></span>
-          <span class="btn" title="Interact with Webview" id="interact-webview"
-            >Auto</span
-          >
-          <span class="btn" title="Show Downloads" id="show-downloads"
-            ><i class="fas fa-download"></i
-          ></span>
-
-          <span class="btn" title="Reset App" id="reset-app"
-            ><i class="fas fa-home"></i
-          ></span>
-          <span class="btn" title="Show Database" id="show-database"
-            ><i class="fas fa-hamburger"></i
-          ></span>
-          <span class="btn" title="Show Vault" id="show-vault">
-            <i class="fa-solid fa-vault"></i>
-          </span>
-          <!-- Theme toggle -->
-          <div class="controls">
-            <div class="toggle">
-              <div
-                id="myToggle"
-                class="switch"
-                role="switch"
-                aria-checked="false"
-                tabindex="0"
-              >
-                <div class="knob" id="knob"></div>
-                <input type="checkbox" id="toggleInput" aria-hidden="true" />
-              </div>
-            </div>
-          </div>
+          <button class="add-tab-btn">
+            <span class="material-symbols-outlined">add</span>
+          </button>
         </div>
       </div>
-      <form id="url-form">
-        <input type="text" id="url-bar" placeholder="Enter URL here" />
-      </form>
-      <webview
-        preload="preload.cjs"
-        tabindex="1"
-        class="tab-content-frame active"
-        id="frame-1"
-        src="D:\\Electron app projects\\merge-localmovies-browser\\localmovies.html"
-      ></webview>
+    </header>
+    <nav class="nav-bar">
+      <div class="nav-buttons">
+        <button class="nav-btn" id="back-btn">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <button class="nav-btn" id="forward-btn">
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+        <button class="nav-btn" id="refresh-btn">
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
+      </div>
+      <div class="address-bar-wrapper">
+        <span class="material-symbols-outlined lock-icon">lock</span>
+        <input
+          type="text"
+          class="address-bar"
+          value=""
+          placeholder="Search Google or type a URL"
+        />
+      </div>
+      <div class="nav-buttons">
+        <button id="show-local-movies" title="Local Movies"  class="nav-btn">
+          <span class="material-symbols-outlined">videocam</span></button>
+         <button id="show-vault" title="Vault" class="nav-btn">
+          <span class="material-symbols-outlined">privacy</span></button>
+          <button id="show-database" title="Database" class="nav-btn">
+          <span class="material-symbols-outlined">storage</span></button>
+          <button id="interact-webview" title="Interact with Webview" class="nav-btn">
+          <span class="material-symbols-outlined">smart_toy</span></button>
+        <button class="nav-btn" title="Downloads" id="show-downloads">
+          <span class="material-symbols-outlined">download</span>
+        </button>
+        <button id="theme-toggle" title="Theme" class="nav-btn">
+          <span class="material-symbols-outlined">dark_mode</span>
+        </button>
+        <button class="nav-btn" title="Reset App" id="reset-app">
+          <span class="material-symbols-outlined">home</span></button>
+      </div>
+    </nav>
+        
+      <main class="content-container">
+      <div class="web-view-wrapper active">
+        <webview
+          preload="preload.cjs"
+          tabindex="1"
+          class="tab-content-frame active"
+          id="frame-1"
+          src=""
+        ></webview>
+      </div>
+    </main>
       <script src="index.js"></script>
 
       <!-- Modal for download progress -->
       <div id="download-modal" class="modal">
         <div class="modal-content">
-          <span class="close">&times;</span>
+          <span class="close-modal">&times;</span>
           <h2>Download Progress</h2>
           <ul id="download-list"></ul>
         </div>
