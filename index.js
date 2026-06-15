@@ -160,6 +160,7 @@ function create_bookmark_list(all_bookmarks){
  if(Array.isArray(all_bookmarks) && all_bookmarks.length>0) all_bookmarks.forEach((info)=>{
 const newbookmark=document.createElement("div");
 newbookmark.classList.add("bookmark-item")
+newbookmark.setAttribute("bookmark-url",info.url)
 let bm_icon=getFaviconUrl(info.url)
 let domain;
  try {
@@ -183,7 +184,7 @@ const newlist_innerhtml=`<img class="bookmark-graphic" src=${bm_icon} alt="">
               <span class="material-symbols-outlined">close</span>
             </button>`
 newbookmark.innerHTML=newlist_innerhtml;
-if(info.url===url){
+if(info.url===document.querySelector(".address-bar").value){
   newbookmark.classList.add("active");
 }
 document.querySelector(".bookmark-list").appendChild(newbookmark)
@@ -213,7 +214,7 @@ document.getElementById("bookmark").addEventListener("click",async()=>{
 })
 
 document.querySelector(".bm-add-btn").addEventListener("click",async()=>{
-  
+  url = document.querySelector(".address-bar").value;
 let res=await electron.addBookmark({name:url?.split("https://")[1]?.split(".")[0],
   url:url
 });
@@ -221,7 +222,16 @@ let bookmarks_info=await electron.getBookmark()
   create_bookmark_list(bookmarks_info["data"])
 })
 
-
+function setActiveBookmark(url){
+document.querySelectorAll(".bookmark-item").forEach((e)=>{
+if(e.getAttribute("bookmark-url")==url){
+  e.classList.add("active");
+}
+else{
+  e.classList.remove("active")
+}
+})
+}
 
 function inpageloading(url) {
   const urlObj = url.includes("http") ? new URL(url) : url;
@@ -239,6 +249,8 @@ function inpageloading(url) {
     activeTab.childNodes[0].textContent = `${tabName} `;
     // activeTab.innerHTML = `${tabName} <button class="close-tab-btn">&times;</button>`;
   } else addTab(url);
+
+  setActiveBookmark(url);
 }
 
 document.querySelector(".address-bar").addEventListener("change", (event) => {
@@ -264,6 +276,7 @@ const tabclicked = (event) => {
   document.getElementById(`frame-${tabId}`).classList.remove("hidden");
   document.getElementById(`frame-${tabId}`).classList.add("active");
   document.querySelector(".address-bar").value = url;
+  setActiveBookmark(url);
 };
 
 const closeTab = (event) => {
@@ -306,9 +319,11 @@ const closeTab = (event) => {
       console.log("New active Tab id: ", newActiveTabId);
       document.querySelector(".address-bar").value =
         newActiveTab?.getAttribute("data-url");
+        setActiveBookmark(newActiveTab?.getAttribute("data-url"))
     }
   } else {
     document.querySelector(".address-bar").value = "";
+    setActiveBookmark("");
   }
 };
 
@@ -375,7 +390,7 @@ const addTab = (
   newWebview.setAttribute("tabindex", newTabId);
   console.log("Setting new webview src to:", url);
   newWebview.setAttribute("src", url);
-
+setActiveBookmark(url);
   newWebview.preload = "preload.cjs";
   let webview_wrapper = document.querySelector(".web-view-wrapper");
   webview_wrapper.appendChild(newWebview);
