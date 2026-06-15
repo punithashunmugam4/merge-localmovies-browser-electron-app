@@ -161,6 +161,9 @@ function create_bookmark_list(all_bookmarks){
 const newbookmark=document.createElement("div");
 newbookmark.classList.add("bookmark-item")
 newbookmark.setAttribute("bookmark-url",info.url)
+newbookmark.addEventListener("click",()=>{
+   addTab(info.url)
+})
 let bm_icon=getFaviconUrl(info.url)
 let domain;
  try {
