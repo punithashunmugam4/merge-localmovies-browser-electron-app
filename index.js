@@ -161,7 +161,7 @@ function create_bookmark_list(all_bookmarks){
 const newbookmark=document.createElement("div");
 newbookmark.classList.add("bookmark-item")
 newbookmark.setAttribute("bookmark-url",info.url)
-newbookmark.addEventListener("click",()=>{
+newbookmark.addEventListener("click",(event)=>{
    addTab(info.url)
 })
 let bm_icon=getFaviconUrl(info.url)
@@ -194,6 +194,7 @@ document.querySelector(".bookmark-list").appendChild(newbookmark)
  })
   document.querySelectorAll(".bm-del-btn").forEach((e)=>{
  e.addEventListener("click",(d)=>{
+  d.stopPropagation();
     console.log("Deleting the selected bookmark: ",d.currentTarget.getAttribute("ref-id"))
     electron.delete_bookmark({id:d.currentTarget.getAttribute("ref-id")})
     d.currentTarget.parentElement.remove();
