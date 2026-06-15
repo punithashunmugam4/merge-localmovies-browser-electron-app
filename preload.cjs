@@ -53,6 +53,11 @@ contextBridge.exposeInMainWorld("electron", {
   editVaultValue: (obj) => ipcRenderer.invoke("edit-vault-value", obj),
   deleteVaultValue: (obj) => ipcRenderer.invoke("delete-vault-value", obj),
   fetchVault: () => ipcRenderer.invoke("fetch-vault"),
+   importWorkflowJSON: (fileName) =>
+    ipcRenderer.invoke("import-workflow", fileName),
+   addBookmark:(obj)=>ipcRenderer.invoke("add-bookmark",obj),
+   getBookmark:()=>ipcRenderer.invoke("import-bookmark"),
+   delete_bookmark:(obj)=>ipcRenderer.invoke("delete-bookmark",obj),
   send: (channel, data) => {
     ipcRenderer.send(channel, data);
   },
@@ -66,3 +71,68 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("fetch-google-sheet-preview", obj),
   toast: (msg) => toast.show(msg),
 });
+
+
+
+const globalVars = {
+  get: (key) => ipcRenderer.invoke("get-global-var", key),
+  set: (key, value) => ipcRenderer.send("set-global-var", key, value),
+  reset: () => ipcRenderer.send("reset-global-var"),
+};
+contextBridge.exposeInMainWorld("globalVars", globalVars);
+
+const actions = {
+  getElementByXpath: (path) => {
+    return document.evaluate(
+      path,
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null,
+    ).singleNodeValue;
+  },
+  sleep: (ms) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  },
+  getXpathFromElement: function getXpathFromElement(element) {
+    if (element && element.id) {
+      // If the element has a unique ID, we can instantly form a reliable relative XPath
+      return `//*[@id="${element.id}"]`;
+    }
+
+    if (element === document.body) {
+      return "/html/body";
+    }
+
+    let siblingCount = 0;
+    const siblings = element.parentNode ? element.parentNode.childNodes : [];
+
+    // Loop through siblings to find the element's exact index position
+    for (let i = 0; i < siblings.length; i++) {
+      const sibling = siblings[i];
+      if (sibling === element) {
+        // Recurse up to the parent element and append current element's tag name and index
+        return (
+          getXpathFromElement(element.parentNode) +
+          "/" +
+          element.tagName.toLowerCase() +
+          "[" +
+          (siblingCount + 1) +
+          "]"
+        );
+      }
+      // Only count siblings of the exact same HTML tag type
+      if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {
+        siblingCount++;
+      }
+    }
+  },
+  openNewTab: (url, script) => {
+    console.log("Sending message to open new tab with URL:", url, script);
+    // Use the context-bridge exposed API in the page context
+
+    ipcRenderer.send("open-new-tab", { url: url, script: script });
+  },
+};
+contextBridge.exposeInMainWorld("actions", actions);
+console.log(actions);

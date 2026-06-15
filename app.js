@@ -4,7 +4,6 @@ import {
   BrowserWindow,
   ipcMain,
   dialog,
-  globalShortcut,
   shell,
   Menu,
   session,
@@ -127,17 +126,6 @@ db.pragma("journal_mode = WAL");
 db.pragma("cache_size = 32000");
 console.log(db.pragma("cache_size", { simple: true }));
 
-ipcMain.handle("get-webview-actions", async () => {
-  try {
-    // const pathModule = path.default;
-    const actionsPath = path.join(app.getAppPath(), "webviewActions.cjs");
-    const content = await fsPromises.readFile(actionsPath, "utf8");
-    return content;
-  } catch (err) {
-    console.error("Failed to read webviewActions.cjs in main:", err);
-    return "";
-  }
-});
 
 async function createGoogleSheetsAuthClient() {
   const credentialsRaw = await fsPromises.readFile(
@@ -204,7 +192,7 @@ function createWindow() {
     icon: path.join(dirname, "icon.png"),
     webPreferences: {
       preload: preload_path,
-      enableRemoteModule: false,
+      // enableRemoteModule: false,
       webviewTag: true,
       nodeIntegration: true,
       nodeIntegrationInSubFrames: true,
@@ -246,6 +234,25 @@ function createWindow() {
     ]);
     contextMenu.popup(BrowserWindow.fromWebContents(event.sender));
   });
+
+  const menu = electron.Menu.buildFromTemplate([
+    {
+      label: "Open main page devtools",
+      accelerator: "CommandOrControl+I",
+      click: () => mainWindow.webContents.openDevTools({ mode: "detach" }),
+    },
+    {
+      label: "Open guest page devtools",
+      accelerator: "CommandOrControl+Shift+I",
+      click: () => mainWindow.webContents.send("open-webview-devtools"),
+    },
+    {
+      label: "Reload Webview",
+      accelerator: "CommandOrControl+R",
+      click: () => mainWindow.webContents.send("reload-webview"),
+    },
+  ]);
+  electron.Menu.setApplicationMenu(menu);
 }
 ipcMain.on("minimize-window", () => {
   if (mainWindow) mainWindow.minimize();
@@ -326,18 +333,6 @@ app.whenReady().then(async () => {
 
   createWindow();
 
-  globalShortcut.register("CommandOrControl+I", () => {
-    mainWindow.openDevTools();
-  });
-  globalShortcut.register("CommandOrControl+Shift+I", () => {
-    mainWindow.webContents.send("open-webview-devtools");
-    // mainWindow.openDevTools();
-  });
-  globalShortcut.register("CommandOrControl+R", () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("reload-webview");
-    }
-  });
   session.defaultSession.on("will-download", (event, item, webContents) => {
     // Set the save path for the download
     item.setSavePath(app.getPath("downloads") + "/" + item.getFilename());
@@ -619,6 +614,96 @@ ipcMain.handle("fetch-vault", async () => {
   }
 });
 
+ipcMain.handle("import-workflow", async (event, fileName) => {
+  const json_filepath = path.join(
+    app.getAppPath(),
+    "bot-script-tree",
+    fileName,
+  );
+
+  try {
+    if (!fs.existsSync(json_filepath)) {
+      return { error: `File not found at specified path: ${json_filepath}` };
+    }
+    const rawData = fs.readFileSync(json_filepath, "utf-8");
+    return JSON.parse(rawData);
+  } catch (error) {
+    console.error("Failed to parse JSON file:", error);
+    return { error: "Invalid JSON structure" };
+  }
+});
+
+
+ipcMain.handle("import-bookmark",async()=>{
+    try {
+    const rows = db
+
+      .prepare(`SELECT * FROM "bookmark" ORDER BY id`)
+      .all();
+    console.log("Fetched vault rows: ", rows);
+    return { success: true, data: rows };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+})
+ipcMain.handle("add-bookmark", async (_, obj) => {
+  try {
+    db.exec(`
+  CREATE TABLE IF NOT EXISTS "bookmark" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    url TEXT  NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+    const stmt = db.prepare(
+      `INSERT INTO "bookmark" (name, url) VALUES (?, ?)`,
+    );
+    const info = stmt.run(obj.name, obj.url );
+    console.log("info changes: ", info.changes);
+    return { success: true, data: info };
+  } catch (err) {
+    // unique constraint -> key already exists
+    if (
+      err &&
+      (err.code === "SQLITE_CONSTRAINT" ||
+        /UNIQUE|CONSTRAINT/i.test(err.message))
+    ) {
+      return { success: false, error: "Bookmark URL exist" };
+    }
+    return { success: false, error: String(err) };
+  }
+});
+
+function del_all_bookmark(){
+   const info = db.prepare(
+      `SELECT * FROM "bookmark"`
+    ).all();
+    console.log("info changes: ", info);
+    info.forEach((e)=>{
+  try {
+    const s = db.prepare(`DELETE FROM "bookmark" WHERE id = ?`);
+    const i = s.run(e.id);
+    return { success: i.changes > 0, changes: i.changes };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+    })
+    console.log("successfully deleted all book mark")
+}
+// del_all_bookmark();
+ipcMain.handle("delete-bookmark", async (_, obj) => {
+  console.log("delte message received: ",obj)
+  try {
+    const stmt = db.prepare(`DELETE FROM "bookmark" WHERE id = ?`);
+    const info = stmt.run(obj.id);
+    return { success: info.changes > 0, changes: info.changes };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+
 ipcMain.handle("get-global-var", (event, key) => {
   return global.stored_vars[key];
 });
@@ -640,5 +725,4 @@ app.on("window-all-closed", () => {
 
 app.on("will-quit", () => {
   if (db) db.close();
-  globalShortcut.unregisterAll();
 });

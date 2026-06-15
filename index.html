@@ -43,9 +43,9 @@
             <span class="material-symbols-outlined">minimize</span>
           </button>
           <button class="control-btn" id="max-btn" data-state="maximized">
-            <span class="material-symbols-outlined max-icon">crop_square</span>
+            <span class="material-symbols-outlined max-icon">flip_to_front</span>
             <span class="material-symbols-outlined restore-icon"
-              >flip_to_front</span
+              >crop_square</span
             >
           </button>
           <button class="control-btn close-btn" id="close-btn">
@@ -110,9 +110,12 @@
         </button>
         <button class="nav-btn" title="Reset App" id="reset-app">
           <span class="material-symbols-outlined">home</span></button>
-      </div>
+          <button id="bookmark" title="Bookmarks" class="nav-btn">
+          <span class="material-symbols-outlined">bookmark</span>
+        </button>
+        </div>
     </nav>
-        
+        <div class="inner-container">
       <main class="content-container">
       <div class="web-view-wrapper active">
         <webview
@@ -124,7 +127,7 @@
         ></webview>
       </div>
     </main>
-      <script src="index.js"></script>
+      <script type="module" src="index.js"></script>
 
       <!-- Modal for download progress -->
       <div id="download-modal" class="modal">
@@ -134,7 +137,75 @@
           <ul id="download-list"></ul>
         </div>
       </div>
-    </div>
-    <script src="downloads.cjs"></script>
+        <script src="downloads.cjs"></script>
+
+  <aside class="bookmark-frame hide">
+      
+      <div class="frame-header">
+        <h2>Bookmarks</h2>
+        <button class="bm-add-btn" title="Add New Bookmark">
+          <span class="icon material-symbols-outlined">add</span>
+      </div>
+      
+      <div class="bookmark-list">
+        
+        <div class="bookmark-item">
+          <img class="bookmark-graphic" src="https://www.google.com/s2/favicons?sz=64&domain=electronjs.org" alt="">
+          <div class="bookmark-info">
+            <span class="bookmark-title">Electron Docs</span>
+            <span class="bookmark-url">electronjs.org</span>
+          </div>
+          <button class="bm-del-btn">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="bookmark-item">
+          <img class="bookmark-graphic" src="https://www.google.com/s2/favicons?sz=64&domain=github.com" alt="GitHub">
+          <div class="bookmark-info">
+            <span class="bookmark-title">GitHub Repository</span>
+            <span class="bookmark-url">github.com</span>
+          </div>
+          <button class="bm-del-btn">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="bookmark-item">
+        <img class="bookmark-graphic" src="https://www.google.com/s2/favicons?sz=64&domain=css-tricks.com" alt="CSS Tricks">
+          <div class="bookmark-info">
+            <span class="bookmark-title">CSS Tricks</span>
+            <span class="bookmark-url">css-tricks.com</span>
+          </div>
+          <button class="bm-del-btn">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="bookmark-item">
+          <img class="bookmark-graphic" src="https://www.google.com/s2/favicons?sz=64&domain=figma.com" alt="Figma">
+          <div class="bookmark-info">
+            <span class="bookmark-title">Figma Projects</span>
+            <span class="bookmark-url">figma.com/files</span>
+          </div>
+          <button class="bm-del-btn">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="bookmark-item">
+          <img class="bookmark-graphic" src="https://www.google.com/s2/favicons?sz=64&domain=developer.mozilla.org" alt="MDN">
+          <div class="bookmark-info">
+            <span class="bookmark-title">MDN Web Docs</span>
+            <span class="bookmark-url">developer.mozilla.org</span>
+          </div>
+          <button class="bm-del-btn">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+      </div>
+    </aside>
+  </div>
   </body>
 </html>

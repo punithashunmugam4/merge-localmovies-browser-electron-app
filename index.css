@@ -17,6 +17,15 @@
   --border-color: rgba(0, 0, 0, 0.2);
   --lock-icon-color: #81c784;
   --hover-overlay: rgba(255, 255, 255, 0.08);
+--bg-main: #181818;        
+    --bg-sidebar: #222222;     
+    --bg-item-hover: #2e2e2e;  
+    --bg-item-active: #2b3542; 
+    --text-main: #e3e3e3;     
+    --text-muted: #8e8e8e;    
+    --accent-blue: #3b82f6;  
+    --sidebar-shadow: -10px 0 30px rgba(0, 0, 0, 0.25), 
+                      -4px 0 10px rgba(0, 0, 0, 0.15);
 }
 
 /* Light Theme overrides */
@@ -33,6 +42,15 @@
   --border-color: rgba(0, 0, 0, 0.12);
   --lock-icon-color: #137333;
   --hover-overlay: rgba(0, 0, 0, 0.06);
+--bg-main: #ebebeb;          
+  --bg-sidebar: #ffffff;     
+  --bg-item-hover: #f0f4f9;  
+  --bg-item-active: #e2ecf8;        
+  --accent-blue: #1a73e8;      
+  --sidebar-shadow: -10px 0 25px rgba(0, 0, 0, 0.05), 
+                    -2px 0 5px rgba(0, 0, 0, 0.03);
+  --item-border: transparent;
+
 }
 
 /* ==========================================================================
@@ -338,6 +356,7 @@ body {
   position: relative;
   background-color: #ffffff; /* Web content background should stay white */
   width: 100%;
+  transition: background-color 0.3s ease;
 }
 
 .web-view-wrapper {
@@ -392,4 +411,188 @@ webview.hidden {
 .close-modal:hover {
   color: black;
   text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+}
+
+.inner-container{
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+/*bookmark bar*/
+.bookmark-frame {
+  width: 300px;
+  height: 100%;
+  background-color: var(--bg-sidebar);
+  border-left: 1px solid #313244;
+box-shadow: var(--sidebar-shadow);
+  flex-direction: column;
+ transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.bookmark-frame.active{
+  display: flex;
+}
+.bookmark-frame.hide{
+  display:none;
+  transform: translateX(100%);
+}
+
+/* Frame Header */
+.frame-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 20px 12px 20px;
+  border-bottom: 1px solid #313244;
+  /* If your app uses a frameless window, you might want to make this draggable:
+     -webkit-app-region: drag; */
+}
+
+.frame-header h2 {
+ font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.bm-add-btn {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-item-hover);
+  border: none;
+  padding: 10px 10px;
+  border-radius: 8px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.bm-add-btn:hover {
+  opacity: 0.85;
+}
+.bm-add-btn .icon {
+
+  font-size: 16px;
+    font-weight: 500;
+}
+
+/* Bookmark List Wrapper */
+.bookmark-list {
+  flex: 1;
+  overflow-y: auto; /* Scroll only the bookmarks list if it overflows */
+padding: 0 12px 20px 12px;
+}
+
+/* Individual Bookmark Item */
+.bookmark-item {
+display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  background-color: transparent;
+  
+  /* Hardware accelerated fluid transition properties */
+  transition: background-color 0.2s cubic-bezier(0.25, 1, 0.5, 1),
+              transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.bookmark-item:hover {
+ background-color: var(--bg-item-hover);
+  transform: translateX(-2px);
+}
+
+.bookmark-item.active {
+ background-color: var(--bg-item-active);
+}
+.bookmark-item.active::before {
+  content: "";
+  position: absolute;
+  left: -12px; /* Pulls back nicely flush against the sidebar edge boundary */
+  top: 15%;
+  height: 70%;
+  width: 4px;
+  background-color: var(--accent-blue);
+  border-radius: 0 4px 4px 0;
+}
+
+.bookmark-graphic {
+  width: 40px;
+  object-fit: contain; /* Prevents stretching */
+  padding: 6px;        /* Keeps a nice native border spacing around the logo */
+}
+/* Layout inside the bookmark item */
+.bookmark-icon {
+  font-size: 18px;
+  margin-right: 12px;
+}
+.bookmark-item.active .bookmark-graphic {
+  background-color: rgba(26, 115, 232, 0.1);
+  color: var(--accent-blue);
+}
+
+.bookmark-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Essential for text-truncation */
+}
+
+.bookmark-title {
+ font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bookmark-item.active .bookmark-title {
+  color: var(--accent-blue);
+}
+.bookmark-url {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.bm-del-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 50%;
+}
+
+.bm-del-btn:hover {
+  background-color: var(--hover-overlay);
+}
+
+.bm-del-btn .material-symbols-outlined {
+  font-size: 14px;
+ 
+}
+.bm-del-btn .material-symbols-outlined:hover {
+ color:  #e81123 !important;
+}
+.bookmark-list::-webkit-scrollbar {
+  width: 5px;
+}
+.bookmark-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.bookmark-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  .bookmark-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+  }
 }

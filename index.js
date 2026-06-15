@@ -1,4 +1,9 @@
 // Ailas renderer process communication setup
+
+import { interactWithWebview } from "./scripts.js";
+
+var url = document.querySelector(".address-bar").value;
+var activeWebview = document.querySelector(".tab-content-frame.active");
 const localMovies = document.getElementById("show-local-movies");
 const database = document.getElementById("show-database");
 const vault = document.getElementById("show-vault");
@@ -129,25 +134,95 @@ window.electron.receive?.("reload-webview", () => {
   }
 });
 
-let actions = "";
-window.electron
-  .getWebviewActions()
-  .then((data) => {
-    actions = data || "";
-    eval(actions);
-    console.log("Webview actions loaded in renderer", data);
+function getFaviconUrl(inputUrl) {
+  try {
+    // Clean up basic inputs missing http protocols so the URL parser doesn't crash
+    let formattedUrl = inputUrl.trim();
+    if (!/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = 'https://' + formattedUrl;
+    }
 
-    api_call();
+    // Extract the hostname (domain)
+    const urlObj = new URL(formattedUrl);
+    const domain = urlObj.hostname;
+
+    // Return the API string requesting a high-res (64px) version
+    return `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+  } catch (error) {
+    // Fallback image or a local icon asset if the URL is completely broken
+    return 'https://www.google.com/s2/favicons?sz=64&domain=electronjs.org'; 
+  }
+}
+
+function create_bookmark_list(all_bookmarks){
+  document.querySelector(".bookmark-list").innerHTML="";
+  console.log("All bookmarks: ",all_bookmarks)
+ if(Array.isArray(all_bookmarks) && all_bookmarks.length>0) all_bookmarks.forEach((info)=>{
+const newbookmark=document.createElement("div");
+newbookmark.classList.add("bookmark-item")
+let bm_icon=getFaviconUrl(info.url)
+let domain;
+ try {
+    let formattedUrl = info.url.trim();
+    if (!/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = 'https://' + formattedUrl;
+    }
+
+    // Extract the hostname (domain)
+    const urlObj = new URL(formattedUrl);
+     domain = urlObj.hostname;
+  } catch (error) {
+   domain=info?.url?.split("https://")[1]?.split(".")[0];
+  }
+const newlist_innerhtml=`<img class="bookmark-graphic" src=${bm_icon} alt="">
+          <div class="bookmark-info">
+            <span class="bookmark-title">${domain}</span>
+            <span class="bookmark-url">${info.url}</span>
+          </div>
+          <button class="bm-del-btn"  ref-id=${info.id}>
+              <span class="material-symbols-outlined">close</span>
+            </button>`
+newbookmark.innerHTML=newlist_innerhtml;
+if(info.url===url){
+  newbookmark.classList.add("active");
+}
+document.querySelector(".bookmark-list").appendChild(newbookmark)
+ })
+  document.querySelectorAll(".bm-del-btn").forEach((e)=>{
+ e.addEventListener("click",(d)=>{
+    console.log("Deleting the selected bookmark: ",d.currentTarget.getAttribute("ref-id"))
+    electron.delete_bookmark({id:d.currentTarget.getAttribute("ref-id")})
+    d.currentTarget.parentElement.remove();
   })
-  .catch((err) => {
-    console.error(
-      "Error loading webviewActions.cjs via getWebviewActions:",
-      err,
-    );
-  });
+})
+}
 
-var url = document.querySelector(".address-bar").value;
-var activeWebview = webview;
+document.getElementById("bookmark").addEventListener("click",async()=>{
+  const bookmark_ele=document.querySelector(".bookmark-frame");
+  if(bookmark_ele.classList.contains("hide")){
+  bookmark_ele.classList.add("active");
+   bookmark_ele.classList.remove("hide");
+   let bookmarks_info=await electron.getBookmark()
+  create_bookmark_list(bookmarks_info["data"])
+  }
+  else{
+     bookmark_ele.classList.add("hide");
+   bookmark_ele.classList.remove("active");
+  }
+  
+})
+
+document.querySelector(".bm-add-btn").addEventListener("click",async()=>{
+  
+let res=await electron.addBookmark({name:url?.split("https://")[1]?.split(".")[0],
+  url:url
+});
+let bookmarks_info=await electron.getBookmark()
+  create_bookmark_list(bookmarks_info["data"])
+})
+
+
+
 function inpageloading(url) {
   const urlObj = url.includes("http") ? new URL(url) : url;
   console.log("URL submitted:", url);
@@ -308,7 +383,7 @@ const addTab = (
   // Inject common functions into the new webview
   // if (!url.includes("http")) {
   newWebview.addEventListener("dom-ready", () => {
-    if (actions) newWebview.executeJavaScript(actions);
+  
     const theme = localStorage.getItem("theme") || "dark";
     newWebview.executeJavaScript(`
       document.body.setAttribute("data-theme", "${theme}")
@@ -329,10 +404,7 @@ const addTab = (
       document.querySelector(".address-bar").style.backgroundSize = "0% 100%";
     }, 500);
     url = document.querySelector(".address-bar").value;
-    newWebview.executeJavaScript(script);
-    newWebview.addEventListener("did-navigate-in-page", (event) => {
-      newWebview.executeJavaScript(electron.continue_verification_script);
-    });
+  
     newWebview.addEventListener("beforeunload", (event) => {
       event.preventDefault();
       event.returnValue = "";
@@ -362,7 +434,10 @@ const addTab = (
     if (!event.isMainFrame) return;
     newWebview.executeJavaScript("window.location.href").then((url) => {
       console.log("Webview frame finished loading:", url);
-      if (url.includes("blank.html")) url = "";
+      if (url.includes("blank.html")){
+         url = "";
+         document.querySelector(".address-bar").focus();
+      }
       document.querySelector(".address-bar").value = url;
       newElement.setAttribute("data-url", url);
     });
@@ -398,7 +473,6 @@ document.querySelectorAll(".tab").forEach((tab) => {
 // Add event listeners for the initial webview
 const initialWebview = webview;
 initialWebview.addEventListener("dom-ready", () => {
-  initialWebview.executeJavaScript(actions);
   const theme = localStorage.getItem("theme") || "dark";
   initialWebview.executeJavaScript(`
       document.body.setAttribute("data-theme", "${theme}")
@@ -453,30 +527,23 @@ initialWebview.addEventListener("did-fail-load", (event) => {
     `Error: ${event.errorDescription}`;
 });
 
-activeWebview.addEventListener("beforeunload", (event) => {
-  console.log("do not close");
-  event.preventDefault();
-  event.returnValue = "";
-});
+// activeWebview.addEventListener("beforeunload", (event) => {
+//   console.log("do not close");
+//   event.preventDefault();
+//   event.returnValue = "";
+// });
 
 // Interact with webview content
-const interactwithwebview = (webview, script) => {
-  console.log("interact with webview");
-  webview.executeJavaScript(script);
-};
 
-window.addEventListener("DOMContentLoaded", () => {
+
   initTheme();
-  console.log("DOM content loaded");
-  document.getElementById("interact-webview").addEventListener("click", () => {
-    url = document.querySelector(".address-bar").value;
-    console.log("Interact with webview clicked", url);
-    if (url.includes("https://moviesmod.how/download")) {
-      let webview = document.querySelector(".tab-content-frame.active");
-      interactwithwebview(webview, electron.moviesmod_script);
-    }
+  
+  document.getElementById("interact-webview").addEventListener("click", async () => {
+    console.log("Interact with webview clicked");
+    const script = await electron.importWorkflowJSON("moviesmod_script_test.json");
+   await interactWithWebview(script);
   });
-});
+
 
 // Listen for the 'open-webview-devtools' event from the main process
 window.electron.receive("open-webview-devtools", () => {
