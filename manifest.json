@@ -1,10 +1,12 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "changedFiles": [
     "package-lock.json",
     "package.json",
     "index.js",
-    "index.html"
+    "index.html",
+    "app.js",
+    "localmovies.js"
   ],
   "newDependencies": {}
 }

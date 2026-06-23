@@ -229,6 +229,9 @@ getAllBtn.addEventListener("click", async () => {
     movies = await window.electron.getAllMovies();
     displayMovies(movies);
   } finally {
+     document.getElementById("path-text").textContent = movies.length
+      ? `Found ${movies.length} movie(s) locally.`
+      : `No movies found in "${folder}".`;
     hideLoader();
   }
 });

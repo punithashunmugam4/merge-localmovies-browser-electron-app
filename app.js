@@ -11,6 +11,7 @@ import {
 import electron from "electron";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import { pathToFileURL } from "url";
 import pkg from "electron-updater";
 import Database from "better-sqlite3";
@@ -703,6 +704,44 @@ ipcMain.handle("delete-bookmark", async (_, obj) => {
   }
 });
 
+ipcMain.on("clean-temp",async ()=>{
+  session.defaultSession.clearCache();
+  session.defaultSession.clearStorageData();
+  // let temp_paths=["C:\\Windows\\Temp","C:\\Users\\PUNITH~1\\AppData\\Local\\Temp","C:\\Windows\\prefetch"]
+  const userHome = os.homedir(); 
+    const temp_paths = [
+      "C:\\Windows\\Temp",
+      "C:\\Windows\\prefetch",
+      "C:\\Windows\\SoftwareDistribution\\Download",
+      "C:\\Windows\\Logs",
+      "C:\\ProgramData\\Microsoft\\Network\\Downloader",
+      path.join(userHome, "AppData\\Local\\Temp"),
+      path.join(userHome, "AppData\\Local\\Microsoft\\Windows\\WER"),
+      path.join(userHome, "AppData\\Local\\CrashDumps")
+    ];
+for (const targetFolder of temp_paths) {
+      try {
+        await fsPromises.access(targetFolder);
+        const items = await fsPromises.readdir(targetFolder);
+        const deletionPromises = items.map(async (item) => {
+          const itemPath = path.join(targetFolder, item);
+          try {
+            await fsPromises.rm(itemPath, { recursive: true, force: true });
+          } catch (err) {
+            console.warn(`Skipped locked item: ${itemPath}`);
+          }
+        });
+
+        // Execute all deletions for this folder in parallel
+        await Promise.all(deletionPromises);
+        console.log(`Successfully emptied contents of: ${targetFolder}`);
+
+      } catch (folderError) {
+        console.error(`Could not read or process folder ${targetFolder}:`, folderError.message);
+      }
+    }
+  
+})
 
 ipcMain.handle("get-global-var", (event, key) => {
   return global.stored_vars[key];

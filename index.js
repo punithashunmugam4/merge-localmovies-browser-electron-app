@@ -578,3 +578,7 @@ window.electron.receive("inspect-element", (event) => {
   webview = document.querySelector(".tab-content-frame.active");
   webview?.inspectElement(event.x, event.y);
 });
+
+document.getElementById("clean-temp").addEventListener("click",()=>{
+  electron.send("clean-temp")
+})
