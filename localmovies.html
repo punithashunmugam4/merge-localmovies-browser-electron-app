@@ -12,7 +12,8 @@
   </head>
   <body>
     <div id="container">
-      <h1>Local Movies</h1>
+      <div class="header-and-text">
+      <h1>Local Movies </h1> <span id="path-text"></span></div>
       <div id="content">
         <div id="searchContainer">
           <input
@@ -24,13 +25,30 @@
           <i class="fa-solid fa-delete-left" id="clearSearch"></i>
         </div>
         <button id="searchBtn">Search</button>
+         <div class="sort-controls">
+          <label>
+            Sort by
+            <select id="sortField">
+              <option value="name">Name</option>
+              <option value="createdAt">Created date</option>
+              <option value="size">Size</option>
+            </select>
+          </label>
+          <label id="sortOrderLabel" class="hidden">
+            Order
+            <select id="sortOrder">
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+          </label>
+        </div>
         <button id="getAllMovies">Get All Movies</button>
         <button id="chooseBtn">Choose Folder</button>
         <div id="loader" class="loader hidden" aria-hidden="true">
           <div class="spinner" role="status" aria-hidden="true"></div>
           <span class="loader-text">Loading…</span>
         </div>
-        <span id="path-text"></span>
+        
       </div>
       <ul id="movies"></ul>
 

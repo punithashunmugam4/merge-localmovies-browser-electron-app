@@ -579,6 +579,7 @@ window.electron.receive("inspect-element", (event) => {
   webview?.inspectElement(event.x, event.y);
 });
 
-document.getElementById("clean-temp").addEventListener("click",()=>{
-  electron.send("clean-temp")
+document.getElementById("clean-temp").addEventListener("click",async ()=>{
+  await electron.send("clean-temp")
+  window.electron.toast("Cleared all temp files");
 })

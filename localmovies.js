@@ -56,12 +56,21 @@ function displayMovies(movies) {
       await window.electron.openPath(m.path);
     });
 
+    const add_info_cont=document.createElement("div")
+    add_info_cont.className="add_info_cont"
     const pathSpan = document.createElement("span");
     pathSpan.className = "path";
     pathSpan.textContent = m.path.split("\\").slice(0, -1).join("\\");
 
+    const size=document.createElement("span");
+    size.className="path"
+    size.textContent=`${parseInt(m.size/1e+6)} MB`;
+    add_info_cont.appendChild(pathSpan);
+    add_info_cont.appendChild(size);
+
     content.appendChild(a);
-    content.appendChild(pathSpan);
+    content.appendChild(add_info_cont);
+   
 
     // three-dot button for more options
     const moreBtn = document.createElement("button");
@@ -85,6 +94,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   showLoader();
   try {
     movies = await window.electron.getAllMovies();
+    console.log("All movies: ",movies)
     displayMovies(movies);
   } finally {
     document.getElementById("path-text").textContent = movies.length
@@ -93,6 +103,57 @@ window.addEventListener("DOMContentLoaded", async () => {
     hideLoader();
   }
 });
+
+document.getElementById("sortField").addEventListener("change",(e)=>{
+let val=e.target.value;
+let order=document.getElementById("sortOrder").value;
+console.log("Sortby value: ", val)
+console.log("Order value: ", order)
+let sorted_movies=null;
+if(order=="desc"){
+if(val=="size")
+sorted_movies=movies.toSorted((a, b) => b.size - a.size); 
+else if(val=="name")
+  sorted_movies=movies.toSorted((a, b) => b.name.localeCompare(a.name)); 
+else if(val=="createdAt")
+  sorted_movies=movies.toSorted((a, b) => b.createdAt - a.createdAt); 
+
+}
+else{
+if(val=="size")
+sorted_movies=movies.toSorted((a, b) => a.size - b.size); 
+else if(val=="name")
+  sorted_movies=movies.toSorted((a, b) => a.name.localeCompare(b.name)); 
+else if(val=="createdAt")
+  sorted_movies=movies.toSorted((a, b) => a.createdAt - b.createdAt); 
+}
+displayMovies(sorted_movies)
+})
+
+document.getElementById("sortOrder").addEventListener("change",(e)=>{
+let order=e.target.value;
+let sort=document.getElementById("sortField").value;
+console.log("Sortby value: ", sort)
+console.log("Order value: ", order)
+let sorted_movies=null;
+if(order=="desc"){
+  if(sort=="name"){
+     sorted_movies=movies.toSorted((a, b) => b.name.localeCompare(a.name)); 
+  }
+  else {
+    sorted_movies=movies.toSorted((a,b)=>b[`${sort}`]-a[`${sort}`])
+}
+}
+else{
+  if(sort=="name")
+    sorted_movies=movies.toSorted((a, b) => a.name.localeCompare(b.name)); 
+  else {
+    sorted_movies=movies.toSorted((a,b)=>a[`${sort}`]-b[`${sort}`])
+  }
+}
+displayMovies(sorted_movies);
+})
+
 function openItemMenu(anchorEl, movie) {
   const rect = anchorEl.getBoundingClientRect();
   const menu = document.createElement("div");

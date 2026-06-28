@@ -395,6 +395,7 @@ ipcMain.handle("choose-folder", async () => {
   return result.filePaths[0];
 });
 
+
 async function getMoviesRecursively(folders) {
   const movieExt = /\.(mp4|mkv|avi|mov|wmv|flv)$/i;
   const results = [];
@@ -415,10 +416,18 @@ async function getMoviesRecursively(folders) {
       if (entry.isDirectory()) {
         await walk(fullPath);
       } else if (entry.isFile() && movieExt.test(entry.name)) {
+        let stats = null;
+        try {
+          stats = await fsPromises.stat(fullPath);
+        } catch (err) {
+          console.warn("Failed to stat file:", fullPath, err);
+        }
         results.push({
           name: entry.name,
           path: fullPath,
           icon: icon.toDataURL(),
+          size: stats?.size ?? 0,
+          createdAt: stats?.birthtimeMs ?? stats?.ctimeMs ?? 0,
         });
       }
     }
